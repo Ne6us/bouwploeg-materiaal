@@ -5,7 +5,7 @@ elkaar zit en welke keuzes er gemaakt zijn. Bewaar dit samen met de app.
 Als je later iets wilt aanpassen, geef dit bestand er dan bij, dan is meteen
 duidelijk hoe alles bedoeld is.
 
-Laatst bijgewerkt: 21 augustus 2026 (contactmenu toegevoegd)
+Laatst bijgewerkt: 23 augustus 2026 (draaiboekmenu toegevoegd)
 
 ---
 
@@ -34,6 +34,7 @@ horen deze bestanden te staan, allemaal naast elkaar in dezelfde map:
 Aanbevolen om ook op GitHub te bewaren (in een map "bron"):
 
 - contact-broncode.js      Leesbare broncode van het contactmenu
+- draaiboek-broncode.js    Leesbare broncode van het draaiboekmenu
 
 Extra bewaard in deze backup, hoeven NIET op GitHub:
 
@@ -97,7 +98,11 @@ geleend van, aantal, naam invoerder, notities.
 1. Nieuw materiaal toevoegen
 2. Materiaal (overzicht met filters en print-optie)
 3. Inlever/afstreeplijst (met uitcheck-knop per item)
-4. Contact (contactpersonen per hike, met belknop)
+4. Draaiboek (bouwposten per dag, met filters en kaartkoppeling)
+5. Contact (contactpersonen per hike, met belknop)
+
+Let op de volgorde in de menubalk onderin: Toevoegen, Overzicht, Inleveren,
+Draaiboek, Contact.
 
 ---
 
@@ -145,7 +150,54 @@ het contactmenu later aanpassen, gebruik dan dat bestand.
 
 ---
 
-## 10. De Firebase-instellingen
+## 10. Het draaiboekmenu (toegevoegd 23 augustus 2026)
+
+Het menu "Draaiboek" verschijnt in het middendeel van de app, net als de andere
+schermen, dus met de header bovenin en het menu onderin zichtbaar. In de menubalk
+staat het tussen Inleveren en Contact. Het raakt de materiaallijst en de contacten
+niet aan.
+
+- Bouwposten worden bewaard in de database in een APART onderdeel genaamd
+  "draaiboek" (naast "items" en "contacts").
+- De dagen en hun volgorde: dinsdag, woensdag, donderdag, vrijdag, zaterdag.
+  De lijst wordt per dag gegroepeerd, met een duidelijke scheiding, en binnen een
+  dag gesorteerd op tijdstip.
+- Per bouwpost kun je invoeren: dag, tijdstip, hike (A t/m F of Nvt), bouwpost
+  nummer, locatie, activiteit, foto, coördinaat, status en bijzonderheden.
+- Het bouwpost nummer wordt getoond als de hikeletter met een tweecijferig
+  nummer, bijvoorbeeld "C03". Bij hike Nvt is er geen letter (dan bijv. "01").
+- De foto wordt automatisch verkleind (net als bij het materiaal) en verschijnt
+  rechts in het overzicht bij de bouwpost, en groot in het detailscherm.
+- De hikes gebruiken dezelfde kleuren als bij Contact. Nvt is grijs.
+- Statussen en kleur: nog niet gebouwd (oranje), gebouwd (groen), opgeruimd
+  (blauw). Bij status opgeruimd staat er in het overzicht een streep door de naam
+  van de post, zodat je ziet dat die klaar is.
+- Bovenaan staan filters voor dag, status en hike.
+- Onderin staat een plusknop om een bouwpost toe te voegen. Tik je op een bouwpost
+  in de lijst, dan verschijnt het detailscherm met alle informatie en een knop
+  "Aanpassen". Verwijderen kan in het aanpasscherm.
+- Coördinaat en kaart: je kunt een losse coördinaat invoeren zoals
+  "52.1234, 5.6789", of een Google Maps-link plakken. Bij een coördinaat
+  verschijnen in het detailscherm knoppen voor Google Maps, Apple Maps of een
+  andere kaart-app. Bij een geplakte link verschijnt een knop die die link
+  rechtstreeks opent (meestal in Google Maps). De keuze tussen kaart-apps werkt
+  alleen als er een coördinaat bekend is; een losse Google-link opent in Google
+  Maps.
+- Volgorde in het detailscherm: foto, dan activiteit en bouwpost nummer naast
+  elkaar, dan dag en tijdstip naast elkaar, dan locatie, status, bijzonderheden
+  en onderaan de kaart.
+
+BELANGRIJK, eenmalig in Firebase regelen: de databaseregels (Firestore Rules)
+moeten het onderdeel "draaiboek" toestaan om te lezen en te schrijven, net zoals
+"items" en "contacts". Staat dat niet aan, dan worden bouwposten alleen op de
+telefoon zelf bewaard in plaats van gedeeld.
+
+LEESBARE BRONCODE: van dit draaiboekmenu is de leesbare broncode bewaard in het
+bestand draaiboek-broncode.js. Dezelfde code zit ook onderin index.html.
+
+---
+
+## 11. De Firebase-instellingen
 
 De koppeling met de database staat bovenin de index.html, in een blok dat begint
 met `window.__BOUWPLOEG_FIREBASE__`. Dit zijn geen geheime wachtwoorden, maar de
