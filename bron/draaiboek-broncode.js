@@ -48,11 +48,11 @@
   };
 
   // De mogelijke statussen en hun kleur.
-  var STATUSSEN = ["nog niet gebouwd", "gebouwd", "opgeruimd"];
+  var STATUSSEN = ["nog niet gebouwd", "gebouwd", "afgerond"];
   var STATUS_KLEUR = {
     "nog niet gebouwd": "#E6801A",
     "gebouwd": "#4E7D42",
-    "opgeruimd": "#3E6E8E"
+    "afgerond": "#3E6E8E"
   };
 
   // ---------------------------------------------------------------------
@@ -177,9 +177,6 @@
   }
   function appleMapsUrl(c) {
     return "https://maps.apple.com/?q=" + c.lat + "," + c.lng;
-  }
-  function geoUrl(c) {
-    return "geo:" + c.lat + "," + c.lng + "?q=" + c.lat + "," + c.lng;
   }
 
   // Bouwpostnummer tonen als bijvoorbeeld "C03": de hikeletter gevolgd door
@@ -405,7 +402,7 @@
       + '  </div>'
       + '  <label class="dbk-veld"><span>Co\u00f6rdinaat of Google Maps-link</span><input data-coord type="text" placeholder="52.1234, 5.6789 of een kaart-link"></label>'
       + '  <label class="dbk-veld"><span>Status</span><span data-status></span></label>'
-      + '  <label class="dbk-veld"><span>Bijzonderheden</span><textarea data-bijz placeholder="Eventuele opmerkingen"></textarea></label>'
+      + '  <label class="dbk-veld"><span>Afspraken en bijzonderheden</span><textarea data-bijz placeholder="Afspraken en bijzonderheden"></textarea></label>'
       + '</div>'
       + '<div class="dbk-acties">'
       + '  <button class="dbk-verwijder" data-verwijder style="display:none">Verwijderen</button>'
@@ -559,7 +556,7 @@
 
     if (p.activiteit) {
       var act = document.createElement("div");
-      act.className = "dbk-activiteit" + (p.status === "opgeruimd" ? " dbk-af" : "");
+      act.className = "dbk-activiteit" + (p.status === "afgerond" ? " dbk-af" : "");
       act.textContent = p.activiteit;
       binnen.appendChild(act);
     }
@@ -659,8 +656,8 @@
       b.appendChild(rijS);
     }
 
-    // 6. Bijzonderheden
-    if (p.bijzonderheden) b.appendChild(detailRij("Bijzonderheden", p.bijzonderheden));
+    // 6. Afspraken en bijzonderheden
+    if (p.bijzonderheden) b.appendChild(detailRij("Afspraken en bijzonderheden", p.bijzonderheden));
 
     // 7. Locatie op kaart: werkt met een losse coördinaat OF een geplakte link.
     if (p.coord) {
@@ -674,10 +671,9 @@
       var kn = document.createElement("div");
       kn.className = "dbk-kaartknoppen";
       if (c) {
-        // Er is een coördinaat bekend: keuze uit meerdere kaart-apps.
+        // Er is een coördinaat bekend: keuze uit Google Maps of Apple Maps.
         kn.appendChild(kaartLink("Google Maps", googleMapsUrl(c)));
         kn.appendChild(kaartLink("Apple Maps", appleMapsUrl(c)));
-        kn.appendChild(kaartLink("Andere kaart-app", geoUrl(c)));
       } else if (isLink(p.coord)) {
         // Een geplakte link (meestal Google Maps): open die rechtstreeks.
         kn.appendChild(kaartLink("Open in kaart", String(p.coord).trim()));

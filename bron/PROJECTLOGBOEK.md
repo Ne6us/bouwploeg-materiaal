@@ -163,14 +163,14 @@ niet aan.
   De lijst wordt per dag gegroepeerd, met een duidelijke scheiding, en binnen een
   dag gesorteerd op tijdstip.
 - Per bouwpost kun je invoeren: dag, tijdstip, hike (A t/m F of Bouwploeg), bouwpost
-  nummer, locatie, activiteit, foto, coördinaat, status en bijzonderheden.
+  nummer, locatie, activiteit, foto, coördinaat, status en afspraken en bijzonderheden.
 - Het bouwpost nummer wordt getoond als de hikeletter met een tweecijferig
   nummer, bijvoorbeeld "C03". Bij hike Bouwploeg is er geen letter (dan bijv. "01").
 - De foto wordt automatisch verkleind (net als bij het materiaal) en verschijnt
   rechts in het overzicht bij de bouwpost, en groot in het detailscherm.
 - De hikes gebruiken dezelfde kleuren als bij Contact. Bouwploeg is grijs.
-- Statussen en kleur: nog niet gebouwd (oranje), gebouwd (groen), opgeruimd
-  (blauw). Bij status opgeruimd staat er in het overzicht een streep door de naam
+- Statussen en kleur: nog niet gebouwd (oranje), gebouwd (groen), afgerond
+  (blauw). Bij status afgerond staat er in het overzicht een streep door de naam
   van de post, zodat je ziet dat die klaar is.
 - Bovenaan staan filters voor dag, status en hike.
 - Onderin staat een plusknop om een bouwpost toe te voegen. Tik je op een bouwpost
@@ -178,9 +178,8 @@ niet aan.
   "Aanpassen". Verwijderen kan in het aanpasscherm.
 - Coördinaat en kaart: je kunt een losse coördinaat invoeren zoals
   "52.1234, 5.6789", of een Google Maps-link plakken. Bij een coördinaat
-  verschijnen in het detailscherm knoppen voor Google Maps, Apple Maps of een
-  andere kaart-app. Bij een geplakte link verschijnt een knop die die link
-  rechtstreeks opent (meestal in Google Maps). De keuze tussen kaart-apps werkt
+  verschijnen in het detailscherm knoppen voor Google Maps of Apple Maps. Bij een geplakte link verschijnt een knop die die link
+  rechtstreeks opent (meestal in Google Maps). De keuze tussen deze twee werkt
   alleen als er een coördinaat bekend is; een losse Google-link opent in Google
   Maps.
 - Volgorde in het detailscherm: foto, dan activiteit en bouwpost nummer naast
