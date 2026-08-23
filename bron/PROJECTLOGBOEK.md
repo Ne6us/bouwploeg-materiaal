@@ -162,13 +162,13 @@ niet aan.
 - De dagen en hun volgorde: dinsdag, woensdag, donderdag, vrijdag, zaterdag.
   De lijst wordt per dag gegroepeerd, met een duidelijke scheiding, en binnen een
   dag gesorteerd op tijdstip.
-- Per bouwpost kun je invoeren: dag, tijdstip, hike (A t/m F of Nvt), bouwpost
+- Per bouwpost kun je invoeren: dag, tijdstip, hike (A t/m F of Bouwploeg), bouwpost
   nummer, locatie, activiteit, foto, coördinaat, status en bijzonderheden.
 - Het bouwpost nummer wordt getoond als de hikeletter met een tweecijferig
-  nummer, bijvoorbeeld "C03". Bij hike Nvt is er geen letter (dan bijv. "01").
+  nummer, bijvoorbeeld "C03". Bij hike Bouwploeg is er geen letter (dan bijv. "01").
 - De foto wordt automatisch verkleind (net als bij het materiaal) en verschijnt
   rechts in het overzicht bij de bouwpost, en groot in het detailscherm.
-- De hikes gebruiken dezelfde kleuren als bij Contact. Nvt is grijs.
+- De hikes gebruiken dezelfde kleuren als bij Contact. Bouwploeg is grijs.
 - Statussen en kleur: nog niet gebouwd (oranje), gebouwd (groen), opgeruimd
   (blauw). Bij status opgeruimd staat er in het overzicht een streep door de naam
   van de post, zodat je ziet dat die klaar is.

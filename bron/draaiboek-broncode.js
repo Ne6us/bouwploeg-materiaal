@@ -34,9 +34,9 @@
   // De vaste dagen, in de volgorde waarin ze getoond moeten worden.
   var DAGEN = ["dinsdag", "woensdag", "donderdag", "vrijdag", "zaterdag"];
 
-  // De hikes voor het draaiboek: A t/m F, plus Nvt. Kleuren gelijk aan het
+  // De hikes voor het draaiboek: A t/m F, plus Bouwploeg. Kleuren gelijk aan het
   // contactmenu, zodat dezelfde hike overal dezelfde kleur heeft.
-  var HIKES = ["A hike", "B hike", "C hike", "D hike", "E hike", "F hike", "Nvt"];
+  var HIKES = ["A hike", "B hike", "C hike", "D hike", "E hike", "F hike", "Bouwploeg"];
   var HIKE_KLEUR = {
     "A hike": "#C15A38",
     "B hike": "#3E6E8E",
@@ -44,7 +44,7 @@
     "D hike": "#8A5A9E",
     "E hike": "#4E7D42",
     "F hike": "#B8902E",
-    "Nvt": "#6B7280"
+    "Bouwploeg": "#6B7280"
   };
 
   // De mogelijke statussen en hun kleur.
@@ -184,10 +184,11 @@
 
   // Bouwpostnummer tonen als bijvoorbeeld "C03": de hikeletter gevolgd door
   // het nummer met twee cijfers (dus een 0 ervoor als het onder de 10 is).
-  // Bij hike "Nvt" is er geen letter, dan alleen het nummer (bijv. "01").
+  // Alleen de hikes A t/m F krijgen een letter; bij Bouwploeg is er geen
+  // letter, dan alleen het nummer (bijv. "01").
   function postLabel(p) {
     if (!p.post) return "";
-    var letter = (p.hike && p.hike !== "Nvt") ? p.hike.charAt(0) : "";
+    var letter = /^[A-F] hike$/.test(p.hike || "") ? p.hike.charAt(0) : "";
     var nr = String(p.post).trim();
     if (/^\d+$/.test(nr) && nr.length < 2) nr = "0" + nr;
     return letter + nr;
@@ -739,7 +740,7 @@
       id: bewerktId || nieuwId(),
       dag: vDag.value || DAGEN[0],
       tijd: vTijd.value || "",
-      hike: vHike.value || "Nvt",
+      hike: vHike.value || "Bouwploeg",
       post: vPost.value.trim(),
       locatie: locatie,
       activiteit: activiteit,
