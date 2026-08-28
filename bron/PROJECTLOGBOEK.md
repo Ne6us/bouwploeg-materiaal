@@ -5,7 +5,7 @@ elkaar zit en welke keuzes er gemaakt zijn. Bewaar dit samen met de app.
 Als je later iets wilt aanpassen, geef dit bestand er dan bij, dan is meteen
 duidelijk hoe alles bedoeld is.
 
-Laatst bijgewerkt: 23 augustus 2026 (draaiboekmenu toegevoegd)
+Laatst bijgewerkt: 24 augustus 2026 (verwijdercode toegevoegd)
 
 ---
 
@@ -79,7 +79,7 @@ witte vorm die de app groen inkleurt). Zit vast in de index.html.
 
 ## 5. Geleend van (de opties)
 
-H3, HKG, Ada's hoeve, VLG, Bouwploeg
+H3, HKG, Ada's hoeve, VLG, Bouwploeg, Overig
 
 ---
 
@@ -196,7 +196,25 @@ bestand draaiboek-broncode.js. Dezelfde code zit ook onderin index.html.
 
 ---
 
-## 11. De Firebase-instellingen
+## 11. De verwijdercode (toegevoegd 24 augustus 2026)
+
+Verwijderen van materiaal, contacten en bouwposten vraagt eerst om een gedeelde
+code. Wijzigen (aanpassen) vraagt niet om een code. De code is voor iedereen
+hetzelfde; je geeft hem zelf door aan wie mag verwijderen.
+
+Let op: dit is een lichte drempel, geen echte beveiliging. De code staat in de
+app zelf, dus wie er technisch handig mee is zou hem kunnen omzeilen. Voor het
+voorkomen van per ongeluk of ongewenst verwijderen is het prima.
+
+De code instellen of wijzigen: bovenin index.html staat een blok met het kopje
+"Gedeelde verwijdercode". Daarin staat een regel `var CODE = "Bp2026";`.
+Verander het woord tussen de aanhalingstekens in je eigen code. Dat is de enige
+plek die je hoeft aan te passen; hij geldt meteen voor materiaal, contacten en
+bouwposten.
+
+---
+
+## 12. De Firebase-instellingen
 
 De koppeling met de database staat bovenin de index.html, in een blok dat begint
 met `window.__BOUWPLOEG_FIREBASE__`. Dit zijn geen geheime wachtwoorden, maar de
