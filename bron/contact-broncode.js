@@ -69,6 +69,13 @@
     return "c_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
   }
 
+  // Verwijderen vraagt eerst om de gedeelde verwijdercode (zie index.html).
+  // Wijzigen vraagt hier niet om.
+  function magVerwijderen() {
+    if (typeof window.__bpMagVerwijderen === "function") return window.__bpMagVerwijderen();
+    return confirm("Verwijderen?");
+  }
+
   // Lokale opslag lezen/schrijven (de terugvaloptie).
   function lokaalLezen() {
     try { return JSON.parse(localStorage.getItem(LOKALE_SLEUTEL) || "[]"); }
@@ -259,7 +266,7 @@
     form.querySelector("[data-terug]").addEventListener("click", sluitForm);
     form.querySelector("[data-bewaar]").addEventListener("click", bewaarVanuitForm);
     knopVerwijder.addEventListener("click", function () {
-      if (bewerktId && confirm("Deze contactpersoon verwijderen?")) {
+      if (bewerktId && magVerwijderen()) {
         verwijderContact(bewerktId);
         sluitForm();
       }

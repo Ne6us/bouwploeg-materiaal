@@ -76,6 +76,13 @@
     return "b_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
   }
 
+  // Verwijderen vraagt eerst om de gedeelde verwijdercode (zie index.html).
+  // Wijzigen vraagt hier niet om.
+  function magVerwijderen() {
+    if (typeof window.__bpMagVerwijderen === "function") return window.__bpMagVerwijderen();
+    return confirm("Verwijderen?");
+  }
+
   function lokaalLezen() {
     try { return JSON.parse(localStorage.getItem(LOKALE_SLEUTEL) || "[]"); }
     catch (e) { return []; }
@@ -452,7 +459,7 @@
     });
     formScherm.querySelector("[data-bewaar]").addEventListener("click", bewaarVanuitForm);
     vVerwijder.addEventListener("click", function () {
-      if (bewerktId && confirm("Deze bouwpost verwijderen?")) {
+      if (bewerktId && magVerwijderen()) {
         verwijderPost(bewerktId);
         formScherm.classList.remove("open");
         detail.classList.remove("open");
