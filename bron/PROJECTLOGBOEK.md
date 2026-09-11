@@ -5,7 +5,8 @@ elkaar zit en welke keuzes er gemaakt zijn. Bewaar dit samen met de app.
 Als je later iets wilt aanpassen, geef dit bestand er dan bij, dan is meteen
 duidelijk hoe alles bedoeld is.
 
-Laatst bijgewerkt: 24 augustus 2026 (verwijdercode toegevoegd)
+Laatst bijgewerkt: 11 september 2026 (draaiboekicoon, filters op Inleveren en
+Overzicht, linkvoorbeeld)
 
 ---
 
@@ -30,6 +31,7 @@ horen deze bestanden te staan, allemaal naast elkaar in dezelfde map:
 - sw.js                    Service worker, nodig voor de installatiemelding
 - icon-192.png             App-icoon klein
 - icon-512.png             App-icoon groot
+- linkvoorbeeld.png        Plaatje dat WhatsApp toont bij de link (1200 bij 630)
 
 Aanbevolen om ook op GitHub te bewaren (in een map "bron"):
 
@@ -221,3 +223,54 @@ met `window.__BOUWPLOEG_FIREBASE__`. Dit zijn geen geheime wachtwoorden, maar de
 gewone verbindingsgegevens die elke webapp van Firebase gebruikt. Als je ooit naar
 een ander Firebase-project overstapt, is dit de enige plek die je hoeft te
 vervangen.
+
+---
+
+## 13. Wijzigingen 11 september 2026
+
+**Menu-iconen uit elkaar getrokken.** Draaiboek had hetzelfde klembordicoon als
+Overzicht. Overzicht is ongewijzigd; Draaiboek is nu een kalender met dagstippen.
+Het icoon staat los in index.html bij `label:"Draaiboek"`, dus daar is het altijd
+weer aan te passen.
+
+**Inleveren: filterknop in plaats van groepknoppen.** De rij met Alle groepen, H3,
+HKG enzovoort is vervangen door een knop Filters, met een telletje erachter en
+ernaast in kleine letters welke selectie aanstaat (of Alles zichtbaar). Achter de
+knop klapt een paneel open met Geleend van, Categorie en een knop Filters wissen.
+Filteren op categorie was nieuw op deze pagina. De knoppen Ingecheckt en
+Uitgecheckt zijn bewust blijven staan waar ze stonden.
+
+**Overzicht: filterknop en telling gewisseld.** De telling (bijvoorbeeld
+12 items en 34 stuks) staat nu rechts naast de statusknoppen. De knop Filters staat
+op de plek waar de telling stond, samen met de printknop, en toont dezelfde
+samenvatting als bij Inleveren. Het filterpaneel klapt open onder die knop.
+
+Technisch, voor later: in de inlevercomponent zijn `bpCat` (gekozen categorie),
+`bpOpen` (paneel open of dicht) en `bpN` (aantal actieve filters) toegevoegd.
+Bovenin het bestand staat `bpCats=s`, een doorverwijzing naar de bestaande
+categorieenlijst, omdat die naam binnen die component al bezet was.
+
+---
+
+## 14. Voorvertoning van de link (11 september 2026)
+
+Direct achter `<title>Bouwploeg materiaal</title>` staat nu een blok met regels die
+beginnen met og:. Die zorgen dat WhatsApp bij de link een net kaartje toont met de
+naam, een zin uitleg en een afbeelding, in plaats van een kale blauwe regel.
+
+De afbeelding heet linkvoorbeeld.png en moet naast de index.html op GitHub staan.
+Verander je de naam of de map, pas dan ook de regel og:image aan.
+
+Let op: WhatsApp onthoudt zo'n voorvertoning een tijdje. Na een wijziging de link
+opnieuw versturen, eventueel met ?v=2 erachter.
+
+---
+
+## 15. Materiaal om te delen (los bewaard, hoeft niet op GitHub)
+
+- handleiding-bouwploeg-materiaal.pdf en .png   Eén blad met de vijf schermen
+- deelkaart-bouwploeg-materiaal.pdf en .png     Kaart met QR code en installatiestappen
+- WIJZIGINGEN-11-september-2026.md              Wat er precies veranderd is en waar
+
+De QR code op de deelkaart wijst naar het live adres. Blijft dat adres gelijk, dan
+blijft de code werken.
