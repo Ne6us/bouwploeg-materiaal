@@ -5,8 +5,7 @@ elkaar zit en welke keuzes er gemaakt zijn. Bewaar dit samen met de app.
 Als je later iets wilt aanpassen, geef dit bestand er dan bij, dan is meteen
 duidelijk hoe alles bedoeld is.
 
-Laatst bijgewerkt: 11 september 2026 (draaiboekicoon, filters op Inleveren en
-Overzicht, linkvoorbeeld)
+Laatst bijgewerkt: 13 september 2026 (telling op Overzicht en Inleveren)
 
 ---
 
@@ -271,6 +270,26 @@ opnieuw versturen, eventueel met ?v=2 erachter.
 - handleiding-bouwploeg-materiaal.pdf en .png   Eén blad met de vijf schermen
 - deelkaart-bouwploeg-materiaal.pdf en .png     Kaart met QR code en installatiestappen
 - WIJZIGINGEN-11-september-2026.md              Wat er precies veranderd is en waar
+                                                (hierin staan ook 13 september)
 
 De QR code op de deelkaart wijst naar het live adres. Blijft dat adres gelijk, dan
 blijft de code werken.
+
+---
+
+## 16. Wijzigingen 13 september 2026
+
+**Overzicht: de telling is een vakje geworden.** De regel "7 items · 42 stuks" naast
+de statusknoppen was te breed. Er staat nu een afgerond vakje met bijvoorbeeld 7/42,
+in dezelfde stijl en hoogte als de knoppen Alles, Ingecheckt en Uitgecheckt. Het
+eerste getal is het aantal items, het tweede het aantal stuks, wat lichter gedrukt.
+Beide bewegen mee met de filters die aanstaan. Het vakje is een label, geen knop.
+
+**Inleveren: stuks in het groene balkje.** Bovenaan stond alleen het aantal items.
+Er staat nu bijvoorbeeld "6 items · 42 stuks". Het aantal stuks is de som van alle
+aantallen van het materiaal dat nog ingecheckt staat, dus wat er nog terug moet.
+Dit telt alles, ongeacht welk filter aanstaat.
+
+Technisch: in de inlevercomponent is `bpStuks` toegevoegd, dat de aantallen optelt
+van alle items met status in. Op Overzicht gebruikt het vakje de bestaande getallen
+van de gefilterde lijst.
