@@ -5,7 +5,7 @@ elkaar zit en welke keuzes er gemaakt zijn. Bewaar dit samen met de app.
 Als je later iets wilt aanpassen, geef dit bestand er dan bij, dan is meteen
 duidelijk hoe alles bedoeld is.
 
-Laatst bijgewerkt: 13 september 2026 (telling op Overzicht en Inleveren)
+Laatst bijgewerkt: 22 september 2026 (technieken in het draaiboek)
 
 ---
 
@@ -31,6 +31,8 @@ horen deze bestanden te staan, allemaal naast elkaar in dezelfde map:
 - icon-192.png             App-icoon klein
 - icon-512.png             App-icoon groot
 - linkvoorbeeld.png        Plaatje dat WhatsApp toont bij de link (1200 bij 630)
+- techniek-*.jpg           Uitlegplaatjes van knopen en technieken voor het
+                           draaiboek, bijvoorbeeld techniek-triple-bowline.jpg
 
 Aanbevolen om ook op GitHub te bewaren (in een map "bron"):
 
@@ -164,7 +166,8 @@ niet aan.
   De lijst wordt per dag gegroepeerd, met een duidelijke scheiding, en binnen een
   dag gesorteerd op tijdstip.
 - Per bouwpost kun je invoeren: dag, tijdstip, hike (A t/m F of Bouwploeg), bouwpost
-  nummer, locatie, activiteit, foto, coördinaat, status en afspraken en bijzonderheden.
+  nummer, locatie, activiteit, techniek, foto, coördinaat, status en afspraken en
+  bijzonderheden. (Techniek is toegevoegd op 22 september 2026, zie punt 17.)
 - Het bouwpost nummer wordt getoond als de hikeletter met een tweecijferig
   nummer, bijvoorbeeld "C03". Bij hike Bouwploeg is er geen letter (dan bijv. "01").
 - De foto wordt automatisch verkleind (net als bij het materiaal) en verschijnt
@@ -293,3 +296,96 @@ Dit telt alles, ongeacht welk filter aanstaat.
 Technisch: in de inlevercomponent is `bpStuks` toegevoegd, dat de aantallen optelt
 van alle items met status in. Op Overzicht gebruikt het vakje de bestaande getallen
 van de gefilterde lijst.
+
+---
+
+## 17. Technieken in het draaiboek (22 september 2026)
+
+Bij een bouwpost kun je een of meer technieken kiezen, bijvoorbeeld knopen. In het
+invulscherm staat Techniek direct onder Status. Elke techniek is een knopje dat je
+aan en uit tikt; een gekozen techniek wordt donkergroen met een vinkje. Onder de
+knopjes verschijnt per gekozen techniek een klein voorbeeld met de beschrijving.
+Niets aangetikt betekent geen techniek.
+
+Waar het zichtbaar wordt:
+
+- In de lijst krijgt de bouwpost per techniek een klein label met een knoopje en de
+  naam, op dezelfde regel als de status.
+- In het detailscherm staan de technieken onderaan, onder elkaar, elk met naam,
+  beschrijving en de uitlegafbeelding over de volle breedte. Tik op de afbeelding om hem schermvullend te openen. Tik daar
+  nogmaals om in te zoomen op het stukje waar je tikt, en nog een keer om terug te
+  gaan.
+
+Technieken in de app, in deze volgorde:
+
+| Naam                 | sleutel              | afbeelding                         | toegevoegd   |
+|----------------------|----------------------|------------------------------------|--------------|
+| Gilwell bowline      | triple-bowline       | techniek-triple-bowline.jpg        | 22 sept 2026 |
+| Mastworp op het touw | mastworp-op-het-touw | techniek-mastworp-op-het-touw.jpg  | 22 sept 2026 |
+| Zeppelin knoop       | zeppelin             | techniek-zeppelin.jpg              | 22 sept 2026 |
+| Schootsteek          | schootsteek          | techniek-schootsteek.jpg           | 22 sept 2026 |
+| Dubbele schootsteek  | dubbele-schootsteek  | techniek-dubbele-schootsteek.jpg   | 22 sept 2026 |
+| Munter mule knoop    | munter-mule          | techniek-munter-mule.jpg           | 22 sept 2026 |
+| Paalsteek            | paalsteek            | techniek-paalsteek.jpg             | 22 sept 2026 |
+| Dubbele paalsteek    | dubbele-paalsteek    | techniek-dubbele-paalsteek.jpg     | 22 sept 2026 |
+| Vlinderknoop         | vlinderknoop         | techniek-vlinderknoop.jpg          | 22 sept 2026 |
+
+De Gilwell bowline heette eerst Triple bowline. Alleen de naam is veranderd; de
+sleutel en de bestandsnaam van de afbeelding zijn bewust gelijk gebleven, zodat
+bouwposten die hem al hadden hem houden.
+
+Een nieuwe techniek toevoegen gaat in twee stappen:
+
+1. Zet de afbeelding op GitHub naast index.html, met een naam die begint met
+   "techniek-", bijvoorbeeld techniek-mastworp.jpg.
+2. Voeg in index.html bij TECHNIEKEN (in het draaiboekblok onderin) een regel toe:
+   { sleutel: "mastworp", naam: "Mastworp", afbeelding: "techniek-mastworp.jpg" }
+
+Een techniek kan ook een korte beschrijving krijgen, waarvoor je hem gebruikt.
+Die staat onder de naam, zowel in het invulscherm als in het detailscherm. Voeg
+daarvoor in de regel bij TECHNIEKEN een stukje toe:
+beschrijving: "Waarvoor je deze knoop gebruikt."
+Zonder beschrijving werkt het ook; dan staat er alleen de naam en het plaatje.
+
+Beschrijvingen die er nu in staan:
+
+- Gilwell bowline: Deze knoop gebruiken we om een touw aan een spanset of tirfor te bevestigen.
+- Mastworp op het touw: Deze gebruiken we bijvoorbeeld bij Pics in Space, en
+  om een dik touw aan een boom te bevestigen, zoals bij de start van een apenbaan
+  of kabelbaan.
+- Zeppelin knoop: Geschikt om twee dikke touwen aan elkaar te verbinden. Ook na
+  zware spanning is de knoop makkelijk weer los te maken.
+- Schootsteek: Om twee touwen van verschillende dikte aan elkaar te verbinden.
+- Dubbele schootsteek: Om twee touwen van verschillende dikte aan elkaar te
+  verbinden. Houdt beter dan de gewone schootsteek, vooral bij een groot verschil
+  in dikte of bij glad touw.
+- Munter mule knoop: Om een halve mastworp af te knopen, zodat het touw vast
+  blijft staan. Is ook onder spanning weer los te trekken.
+- Paalsteek: Maakt een vaste lus die niet dichtloopt. Na belasting makkelijk weer
+  los te maken.
+- Dubbele paalsteek: Paalsteek met een extra slag. Houdt beter dan de gewone
+  paalsteek, vooral bij glad of stijf touw.
+- Vlinderknoop: Maakt een vaste lus midden in het touw. Te gebruiken om een
+  beschadigd stuk touw af te zonderen, voor hand- en voetlussen of een touwladder,
+  als ophangpunt voor bijvoorbeeld een lantaarn of pan, om de middelste persoon in
+  een touwteam vast te maken en als katrol in een takel. Een van de sterkste
+  lusknopen: het touw houdt 60 tot 80 procent van zijn breeksterkte.
+  (Samengevat uit de Engelse uitleg van Knotspedia.)
+
+De sleutel wordt in de database bij de bouwpost bewaard. Verander een sleutel
+daarna niet meer, anders raakt een bouwpost zijn techniek kwijt. De naam mag je wel
+altijd aanpassen. Haal je een techniek uit de lijst, dan verdwijnt hij gewoon bij
+de posten die hem hadden, zonder dat er iets kapot gaat.
+
+Technisch: bij een bouwpost wordt het veld `technieken` bewaard, een lijstje met de
+sleutels (leeg als er niets gekozen is). Er zijn geen nieuwe Firebase-regels nodig,
+want het zit in het bestaande onderdeel "draaiboek". Tot 22 september 2026 kon je
+maar een techniek kiezen; die stond in het veld `techniek`. De app leest dat oude
+veld nog steeds, en zet het om naar `technieken` zodra zo'n bouwpost opnieuw wordt
+opgeslagen. Bouwposten van voor de technieken hebben gewoon geen techniek.
+
+**Meegenomen reparatie op Overzicht.** Het vakje met items en stuks (bijvoorbeeld
+6/41) viel op de meeste iPhones rechts een stukje buiten beeld. De statusknoppen
+Alles, Ingecheckt en Uitgecheckt zijn daarom iets smaller gemaakt en staan iets
+dichter op elkaar, en het vakje zelf is compacter. Het past nu op schermen van 375
+breed en breder, ook bij getallen als 45/310.

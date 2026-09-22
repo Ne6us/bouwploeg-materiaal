@@ -15,6 +15,9 @@
    - Je kunt bouwposten toevoegen (plusknop onderin), bekijken, wijzigen en
      verwijderen. Per bouwpost kun je het punt openen in Google Maps, Apple
      Maps of een andere kaart-app.
+   - Per bouwpost kun je een of meer technieken kiezen (bijvoorbeeld
+     knopen). De uitleg daarvan verschijnt als afbeelding in het
+     detailscherm. De lijst met technieken staat hieronder bij TECHNIEKEN.
 
    Hoe het aan de app vastzit:
    - In het menu onderin is een knop "Draaiboek" toegevoegd die naar het
@@ -46,6 +49,58 @@
     "F hike": "#B8902E",
     "Bouwploeg": "#6B7280"
   };
+
+  // ---------------------------------------------------------------------
+  // TECHNIEKEN (knopen en andere technieken)
+  //
+  // Een nieuwe techniek toevoegen gaat in twee stappen:
+  //   1. Zet de afbeelding op GitHub naast index.html, met een naam die
+  //      begint met "techniek-", bijvoorbeeld "techniek-mastworp.jpg".
+  //   2. Voeg hieronder een regel toe met dezelfde bestandsnaam.
+  //
+  // - sleutel: vaste korte naam die in de database bewaard wordt. Verander
+  //   deze later niet meer, anders raken bouwposten hun techniek kwijt.
+  // - naam: zoals hij in de app getoond wordt. Deze mag je wel aanpassen.
+  // - afbeelding: de bestandsnaam op GitHub.
+  // - beschrijving (mag weg): korte uitleg waarvoor je de techniek gebruikt.
+  //   Wordt getoond onder de naam, in het invulscherm en in het detailscherm.
+  // De volgorde hieronder is de volgorde in het keuzemenu.
+  // ---------------------------------------------------------------------
+  var TECHNIEKEN = [
+    { sleutel: "triple-bowline", naam: "Gilwell bowline", afbeelding: "techniek-triple-bowline.jpg",
+      beschrijving: "Deze knoop gebruiken we om een touw aan een spanset of tirfor te bevestigen." },
+    { sleutel: "mastworp-op-het-touw", naam: "Mastworp op het touw", afbeelding: "techniek-mastworp-op-het-touw.jpg",
+      beschrijving: "Deze gebruiken we bijvoorbeeld bij Pics in Space, en om een dik touw aan een boom te bevestigen, zoals bij de start van een apenbaan of kabelbaan." },
+    { sleutel: "zeppelin", naam: "Zeppelin knoop", afbeelding: "techniek-zeppelin.jpg",
+      beschrijving: "Geschikt om twee dikke touwen aan elkaar te verbinden. Ook na zware spanning is de knoop makkelijk weer los te maken." },
+    { sleutel: "schootsteek", naam: "Schootsteek", afbeelding: "techniek-schootsteek.jpg",
+      beschrijving: "Om twee touwen van verschillende dikte aan elkaar te verbinden." },
+    { sleutel: "dubbele-schootsteek", naam: "Dubbele schootsteek", afbeelding: "techniek-dubbele-schootsteek.jpg",
+      beschrijving: "Om twee touwen van verschillende dikte aan elkaar te verbinden. Houdt beter dan de gewone schootsteek, vooral bij een groot verschil in dikte of bij glad touw." },
+    { sleutel: "munter-mule", naam: "Munter mule knoop", afbeelding: "techniek-munter-mule.jpg",
+      beschrijving: "Om een halve mastworp af te knopen, zodat het touw vast blijft staan. Is ook onder spanning weer los te trekken." },
+    { sleutel: "paalsteek", naam: "Paalsteek", afbeelding: "techniek-paalsteek.jpg",
+      beschrijving: "Maakt een vaste lus die niet dichtloopt. Na belasting makkelijk weer los te maken." },
+    { sleutel: "dubbele-paalsteek", naam: "Dubbele paalsteek", afbeelding: "techniek-dubbele-paalsteek.jpg",
+      beschrijving: "Paalsteek met een extra slag. Houdt beter dan de gewone paalsteek, vooral bij glad of stijf touw." },
+    { sleutel: "vlinderknoop", naam: "Vlinderknoop", afbeelding: "techniek-vlinderknoop.jpg",
+      beschrijving: "Maakt een vaste lus midden in het touw. Te gebruiken om een beschadigd stuk touw af te zonderen, voor hand- en voetlussen of een touwladder, als ophangpunt voor bijvoorbeeld een lantaarn of pan, om de middelste persoon in een touwteam vast te maken en als katrol in een takel. Een van de sterkste lusknopen: het touw houdt 60 tot 80 procent van zijn breeksterkte." }
+  ];
+
+  function zoekTechniek(sleutel) {
+    for (var i = 0; i < TECHNIEKEN.length; i++) {
+      if (TECHNIEKEN[i].sleutel === sleutel) return TECHNIEKEN[i];
+    }
+    return null;
+  }
+
+  // De technieken van een bouwpost, in de volgorde van de lijst hierboven.
+  // Bouwposten van voor 22 september 2026 hebben er maar een, in het oude
+  // veld "techniek"; die worden hier ook meegenomen.
+  function techniekenVan(p) {
+    var sleutels = Array.isArray(p.technieken) ? p.technieken : (p.techniek ? [p.techniek] : []);
+    return TECHNIEKEN.filter(function (t) { return sleutels.indexOf(t.sleutel) !== -1; });
+  }
 
   // De mogelijke statussen en hun kleur.
   var STATUSSEN = ["nog niet gebouwd", "gebouwd", "afgerond"];
@@ -252,6 +307,40 @@
     + ".dbk-locatie{font-size:13px;color:hsl(var(--muted-foreground));margin-top:1px}"
     + ".dbk-status{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;"
     + "padding:2px 9px;border-radius:999px;color:#fff}"
+    + ".dbk-techlabel{display:inline-flex;align-items:center;gap:5px;margin:6px 0 0 6px;font-size:12px;font-weight:700;"
+    + "padding:2px 9px;border-radius:999px;border:1px solid hsl(var(--border));color:hsl(var(--foreground));"
+    + "background:hsl(var(--muted))}"
+    + ".dbk-techlabel svg{flex:none}"
+    + ".dbk-techkop{display:flex;align-items:baseline;justify-content:space-between;gap:10px}"
+    + ".dbk-techkop .hint{font-size:12px;color:hsl(var(--muted-foreground));font-weight:600}"
+    + ".dbk-techbeeld{display:block;width:100%;padding:0;margin-top:8px;border:1px solid hsl(var(--border));"
+    + "border-radius:12px;overflow:hidden;background:#fff;cursor:zoom-in}"
+    + ".dbk-techbeeld img{display:block;width:100%;height:auto}"
+    + ".dbk-techvoorbeeld{display:block;width:100%;max-height:180px;object-fit:contain;margin-top:8px;"
+    + "border:1px solid hsl(var(--border));border-radius:12px;background:#fff}"
+    + ".dbk-techuitleg{font-size:14px;line-height:1.45;color:hsl(var(--muted-foreground));margin:6px 0 0;font-weight:500}"
+    + ".dbk-techlabels{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}"
+    + ".dbk-techlabels .dbk-status{margin-top:0}"
+    + ".dbk-techlabels .dbk-techlabel{margin:0}"
+    + ".dbk-techkeuze{display:flex;flex-wrap:wrap;gap:8px}"
+    + ".dbk-techchip{display:inline-flex;align-items:center;gap:6px;border:2px solid hsl(var(--border));"
+    + "background:hsl(var(--card));color:hsl(var(--foreground));border-radius:999px;padding:8px 14px;"
+    + "font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}"
+    + ".dbk-techchip.aan{background:hsl(var(--primary));border-color:hsl(var(--primary));color:hsl(var(--primary-foreground))}"
+    + ".dbk-techchip .vink{display:none}"
+    + ".dbk-techchip.aan .vink{display:inline;font-size:14px;line-height:1}"
+    + ".dbk-techgekozen{display:flex;gap:12px;align-items:flex-start;margin-top:10px;padding:10px;"
+    + "border:1px solid hsl(var(--border));border-radius:12px;background:hsl(var(--card))}"
+    + ".dbk-techgekozen img{width:72px;height:72px;object-fit:contain;background:#fff;border-radius:8px;flex:none;"
+    + "border:1px solid hsl(var(--border))}"
+    + ".dbk-techgekozen .naam{font-weight:700;font-size:15px}"
+    + ".dbk-techgekozen .dbk-techuitleg{margin-top:2px;font-size:13px}"
+    + ".dbk-techblok{margin-top:12px}"
+    + ".dbk-techblok:first-of-type{margin-top:4px}"
+    + ".dbk-zoom .body{padding:0;background:#fff}"
+    + ".dbk-zoom img{display:block;width:100%;height:auto;cursor:zoom-in}"
+    + ".dbk-zoom.groot img{width:200%;max-width:none;cursor:zoom-out}"
+    + ".dbk-zoom .kop .hint{font-size:12px;color:hsl(var(--muted-foreground));font-weight:600}"
     + ".dbk-leeg{text-align:center;color:hsl(var(--muted-foreground));margin-top:50px;font-size:15px}"
     + ".dbk-thumb{width:64px;height:64px;object-fit:cover;flex:none;align-self:center;border-radius:10px;margin:8px 10px 8px 4px}"
     + ".dbk-detailfoto{width:100%;border-radius:12px;margin-bottom:16px;display:block}"
@@ -308,6 +397,7 @@
   // ---------------------------------------------------------------------
   var listRoot, body, plus, detail, formScherm;
   var vDag, vTijd, vHike, vPost, vLocatie, vActiviteit, vCoord, vStatus, vBijz, vVerwijder, formTitel, bewerktId;
+  var techKeuze, techGekozen, zoomScherm, gekozenTech = [];
   var huidigeFoto = "", fotoPreview, fotoInput, fotoWeg;
 
   // De fotovoorbeeldweergave in het formulier bijwerken.
@@ -337,6 +427,66 @@
       sel.appendChild(o);
     });
     return sel;
+  }
+
+  // Technieken kiezen: elke techniek is een knopje dat je aan en uit tikt,
+  // zodat je er meerdere tegelijk kunt kiezen.
+  function tekenTechKeuze() {
+    if (!techKeuze) return;
+    techKeuze.innerHTML = "";
+    TECHNIEKEN.forEach(function (t) {
+      var aan = gekozenTech.indexOf(t.sleutel) !== -1;
+      var knop = document.createElement("button");
+      knop.type = "button";
+      knop.className = "dbk-techchip" + (aan ? " aan" : "");
+      knop.setAttribute("aria-pressed", aan ? "true" : "false");
+      knop.innerHTML = '<span class="vink" aria-hidden="true">\u2713</span>';
+      knop.appendChild(document.createTextNode(t.naam));
+      knop.addEventListener("click", function () {
+        var i = gekozenTech.indexOf(t.sleutel);
+        if (i === -1) gekozenTech.push(t.sleutel); else gekozenTech.splice(i, 1);
+        tekenTechKeuze();
+      });
+      techKeuze.appendChild(knop);
+    });
+
+    // Onder de knopjes: per gekozen techniek een klein voorbeeld met uitleg.
+    techGekozen.innerHTML = "";
+    TECHNIEKEN.forEach(function (t) {
+      if (gekozenTech.indexOf(t.sleutel) === -1) return;
+      var rij = document.createElement("div");
+      rij.className = "dbk-techgekozen";
+      var img = document.createElement("img");
+      img.src = t.afbeelding; img.alt = t.naam;
+      var tekst = document.createElement("div");
+      var naam = document.createElement("div");
+      naam.className = "naam"; naam.textContent = t.naam;
+      tekst.appendChild(naam);
+      if (t.beschrijving) {
+        var u = document.createElement("p");
+        u.className = "dbk-techuitleg"; u.textContent = t.beschrijving;
+        tekst.appendChild(u);
+      }
+      rij.appendChild(img); rij.appendChild(tekst);
+      techGekozen.appendChild(rij);
+    });
+  }
+
+  // Klein knoop-icoontje voor het label in de lijst.
+  var KNOOP_ICOON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+    + 'stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+    + '<path d="M12 12c-2-2.67-4-4-6-4a4 4 0 1 0 0 8c2 0 4-1.33 6-4Zm0 0c2 2.67 4 4 6 4a4 4 0 0 0 0-8c-2 0-4 1.33-6 4Z"/></svg>';
+
+  // De afbeelding groot tonen. Tik op de afbeelding om nog verder in te zoomen.
+  function openZoom(t) {
+    zoomScherm.querySelector("[data-zoomtitel]").textContent = t.naam;
+    var img = zoomScherm.querySelector("[data-zoombeeld]");
+    img.src = t.afbeelding;
+    img.alt = t.naam;
+    zoomScherm.classList.remove("groot");
+    zoomScherm.querySelector(".body").scrollTop = 0;
+    zoomScherm.querySelector(".body").scrollLeft = 0;
+    zoomScherm.classList.add("open");
   }
 
   function bouwSchermen() {
@@ -409,6 +559,9 @@
       + '  </div>'
       + '  <label class="dbk-veld"><span>Co\u00f6rdinaat of Google Maps-link</span><input data-coord type="text" placeholder="52.1234, 5.6789 of een kaart-link"></label>'
       + '  <label class="dbk-veld"><span>Status</span><span data-status></span></label>'
+      + '  <div class="dbk-veld"><span>Techniek</span>'
+      + '    <div class="dbk-techkeuze" data-techkeuze></div>'
+      + '    <div data-techgekozen></div></div>'
       + '  <label class="dbk-veld"><span>Afspraken en bijzonderheden</span><textarea data-bijz placeholder="Afspraken en bijzonderheden"></textarea></label>'
       + '</div>'
       + '<div class="dbk-acties">'
@@ -427,6 +580,38 @@
     vStatus = maakSelect(STATUSSEN, true, "Geen status");
     vStatus.setAttribute("data-status", "");
     formScherm.querySelector("[data-status]").replaceWith(vStatus);
+
+    techKeuze = formScherm.querySelector("[data-techkeuze]");
+    techGekozen = formScherm.querySelector("[data-techgekozen]");
+
+    // Vergrootscherm voor de techniekafbeelding
+    zoomScherm = document.createElement("div");
+    zoomScherm.className = "dbk-scherm dbk-zoom";
+    zoomScherm.style.zIndex = "70";
+    zoomScherm.innerHTML =
+      '<div class="kop"><button class="terug" data-terug aria-label="Terug">&larr;</button>'
+      + '<h2 data-zoomtitel>Techniek</h2><span class="hint">Tik om in te zoomen</span></div>'
+      + '<div class="body"><img data-zoombeeld alt=""></div>';
+    document.body.appendChild(zoomScherm);
+    zoomScherm.querySelector("[data-terug]").addEventListener("click", function () {
+      zoomScherm.classList.remove("open");
+    });
+    zoomScherm.querySelector("[data-zoombeeld]").addEventListener("click", function (ev) {
+      var bodyEl = zoomScherm.querySelector(".body");
+      var img = ev.currentTarget;
+      var rect = img.getBoundingClientRect();
+      var fx = (ev.clientX - rect.left) / rect.width;
+      var fy = (ev.clientY - rect.top) / rect.height;
+      var wordtGroot = !zoomScherm.classList.contains("groot");
+      zoomScherm.classList.toggle("groot");
+      if (wordtGroot) {
+        // Inzoomen rond het punt waar getikt is.
+        bodyEl.scrollLeft = Math.max(0, fx * img.offsetWidth - bodyEl.clientWidth / 2);
+        bodyEl.scrollTop = Math.max(0, fy * img.offsetHeight - bodyEl.clientHeight / 2);
+      } else {
+        bodyEl.scrollLeft = 0;
+      }
+    });
 
     vTijd = formScherm.querySelector("[data-tijd]");
     vPost = formScherm.querySelector("[data-post]");
@@ -573,12 +758,25 @@
       loc.textContent = p.locatie;
       binnen.appendChild(loc);
     }
-    if (p.status) {
-      var st = document.createElement("span");
-      st.className = "dbk-status";
-      st.style.background = STATUS_KLEUR[p.status] || "#6B7280";
-      st.textContent = p.status;
-      binnen.appendChild(st);
+    var tech = techniekenVan(p);
+    if (p.status || tech.length) {
+      var labels = document.createElement("div");
+      labels.className = "dbk-techlabels";
+      if (p.status) {
+        var st = document.createElement("span");
+        st.className = "dbk-status";
+        st.style.background = STATUS_KLEUR[p.status] || "#6B7280";
+        st.textContent = p.status;
+        labels.appendChild(st);
+      }
+      tech.forEach(function (t) {
+        var tl = document.createElement("span");
+        tl.className = "dbk-techlabel";
+        tl.innerHTML = KNOOP_ICOON;
+        tl.appendChild(document.createTextNode(t.naam));
+        labels.appendChild(tl);
+      });
+      binnen.appendChild(labels);
     }
 
     kaart.appendChild(balk);
@@ -694,10 +892,52 @@
       b.appendChild(rij);
     }
 
+    // 8. Technieken, elk met de uitleg als afbeelding. Tik om te vergroten.
+    var techLijst = techniekenVan(p);
+    if (techLijst.length) {
+      var rijT = document.createElement("div");
+      rijT.className = "dbk-detailrij";
+      var kopT = document.createElement("div");
+      kopT.className = "dbk-techkop";
+      var lT = document.createElement("div");
+      lT.className = "label"; lT.textContent = techLijst.length > 1 ? "Technieken" : "Techniek";
+      var hT = document.createElement("span");
+      hT.className = "hint"; hT.textContent = "Tik om te vergroten";
+      kopT.appendChild(lT); kopT.appendChild(hT);
+      rijT.appendChild(kopT);
+      techLijst.forEach(function (techD) {
+        var blok = document.createElement("div");
+        blok.className = "dbk-techblok";
+        var wT = document.createElement("div");
+        wT.className = "waarde"; wT.style.fontWeight = "700"; wT.textContent = techD.naam;
+        blok.appendChild(wT);
+        if (techD.beschrijving) {
+          var uT = document.createElement("p");
+          uT.className = "dbk-techuitleg";
+          uT.textContent = techD.beschrijving;
+          blok.appendChild(uT);
+        }
+        var knopT = document.createElement("button");
+        knopT.type = "button";
+        knopT.className = "dbk-techbeeld";
+        knopT.setAttribute("aria-label", techD.naam + " vergroten");
+        var imgT = document.createElement("img");
+        imgT.src = techD.afbeelding;
+        imgT.alt = techD.naam;
+        imgT.loading = "lazy";
+        knopT.appendChild(imgT);
+        knopT.addEventListener("click", function () { openZoom(techD); });
+        blok.appendChild(knopT);
+        rijT.appendChild(blok);
+      });
+      b.appendChild(rijT);
+    }
+
     detail.querySelector("[data-aanpassen]").onclick = function () {
       detail.classList.remove("open");
       openForm(p);
     };
+    b.scrollTop = 0;
     detail.classList.add("open");
   }
 
@@ -725,6 +965,8 @@
     vActiviteit.value = post ? (post.activiteit || "") : "";
     vCoord.value = post ? (post.coord || "") : "";
     vStatus.value = post ? (post.status || "") : "";
+    gekozenTech = post ? techniekenVan(post).map(function (t) { return t.sleutel; }) : [];
+    tekenTechKeuze();
     vBijz.value = post ? (post.bijzonderheden || "") : "";
     vVerwijder.style.display = post ? "block" : "none";
     huidigeFoto = post ? (post.foto || "") : "";
@@ -749,6 +991,7 @@
       activiteit: activiteit,
       coord: vCoord.value.trim(),
       status: vStatus.value || "",
+      technieken: gekozenTech.slice(),
       bijzonderheden: vBijz.value.trim(),
       foto: huidigeFoto || "",
       updatedAt: Date.now()
@@ -772,3 +1015,4 @@
     start();
   }
 })();
+
