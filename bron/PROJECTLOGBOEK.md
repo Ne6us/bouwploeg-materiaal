@@ -5,7 +5,7 @@ elkaar zit en welke keuzes er gemaakt zijn. Bewaar dit samen met de app.
 Als je later iets wilt aanpassen, geef dit bestand er dan bij, dan is meteen
 duidelijk hoe alles bedoeld is.
 
-Laatst bijgewerkt: 22 september 2026 (technieken in het draaiboek)
+Laatst bijgewerkt: 26 september 2026 (technieken in het draaiboek)
 
 ---
 
@@ -329,6 +329,7 @@ Technieken in de app, in deze volgorde:
 | Paalsteek            | paalsteek            | techniek-paalsteek.jpg             | 22 sept 2026 |
 | Dubbele paalsteek    | dubbele-paalsteek    | techniek-dubbele-paalsteek.jpg     | 22 sept 2026 |
 | Vlinderknoop         | vlinderknoop         | techniek-vlinderknoop.jpg          | 22 sept 2026 |
+| Scaffold hitch       | scaffold-hitch       | techniek-scaffold-hitch.jpg        | 26 sept 2026 |
 
 De Gilwell bowline heette eerst Triple bowline. Alleen de naam is veranderd; de
 sleutel en de bestandsnaam van de afbeelding zijn bewust gelijk gebleven, zodat
@@ -371,6 +372,8 @@ Beschrijvingen die er nu in staan:
   een touwteam vast te maken en als katrol in een takel. Een van de sterkste
   lusknopen: het touw houdt 60 tot 80 procent van zijn breeksterkte.
   (Samengevat uit de Engelse uitleg van Knotspedia.)
+- Scaffold hitch: De knoop die we gebruiken bij het maken van een DNA baan. Deze
+  baan spannen we op met twee spansets.
 
 De sleutel wordt in de database bij de bouwpost bewaard. Verander een sleutel
 daarna niet meer, anders raakt een bouwpost zijn techniek kwijt. De naam mag je wel

@@ -84,7 +84,9 @@
     { sleutel: "dubbele-paalsteek", naam: "Dubbele paalsteek", afbeelding: "techniek-dubbele-paalsteek.jpg",
       beschrijving: "Paalsteek met een extra slag. Houdt beter dan de gewone paalsteek, vooral bij glad of stijf touw." },
     { sleutel: "vlinderknoop", naam: "Vlinderknoop", afbeelding: "techniek-vlinderknoop.jpg",
-      beschrijving: "Maakt een vaste lus midden in het touw. Te gebruiken om een beschadigd stuk touw af te zonderen, voor hand- en voetlussen of een touwladder, als ophangpunt voor bijvoorbeeld een lantaarn of pan, om de middelste persoon in een touwteam vast te maken en als katrol in een takel. Een van de sterkste lusknopen: het touw houdt 60 tot 80 procent van zijn breeksterkte." }
+      beschrijving: "Maakt een vaste lus midden in het touw. Te gebruiken om een beschadigd stuk touw af te zonderen, voor hand- en voetlussen of een touwladder, als ophangpunt voor bijvoorbeeld een lantaarn of pan, om de middelste persoon in een touwteam vast te maken en als katrol in een takel. Een van de sterkste lusknopen: het touw houdt 60 tot 80 procent van zijn breeksterkte." },
+    { sleutel: "scaffold-hitch", naam: "Scaffold hitch", afbeelding: "techniek-scaffold-hitch.jpg",
+      beschrijving: "De knoop die we gebruiken bij het maken van een DNA baan. Deze baan spannen we op met twee spansets." }
   ];
 
   function zoekTechniek(sleutel) {
