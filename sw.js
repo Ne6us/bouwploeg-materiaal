@@ -3,7 +3,9 @@
    (het uiterlijk) snel laadt. De materiaallijst zelf komt live uit
    Firebase en heeft dus wel internet nodig. */
 
-const CACHE = 'bouwploeg-v1';
+// Verhoog dit nummer bij elke nieuwe versie van de app, zodat telefoons
+// zonder bereik ook de nieuwe versie uit het geheugen tonen.
+const CACHE = 'bouwploeg-v2';
 const SCHIL = [
   '/bouwploeg-materiaal/',
   '/bouwploeg-materiaal/index.html',
@@ -40,9 +42,19 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
 
   // Voor navigatie (de pagina zelf): eerst netwerk, val terug op cache.
+  // Een gelukte versie wordt meteen onthouden, zodat de app zonder bereik
+  // altijd de nieuwste bekende versie opent.
   if (req.mode === 'navigate') {
     event.respondWith(
-      fetch(req).catch(() => caches.match('/bouwploeg-materiaal/index.html'))
+      fetch(req)
+        .then((antwoord) => {
+          if (antwoord && antwoord.ok) {
+            const kopie = antwoord.clone();
+            caches.open(CACHE).then((c) => c.put('/bouwploeg-materiaal/index.html', kopie)).catch(() => {});
+          }
+          return antwoord;
+        })
+        .catch(() => caches.match('/bouwploeg-materiaal/index.html'))
     );
     return;
   }
