@@ -5,7 +5,7 @@ elkaar zit en welke keuzes er gemaakt zijn. Bewaar dit samen met de app.
 Als je later iets wilt aanpassen, geef dit bestand er dan bij, dan is meteen
 duidelijk hoe alles bedoeld is.
 
-Laatst bijgewerkt: 26 september 2026 (technieken in het draaiboek)
+Laatst bijgewerkt: 30 september 2026 (controle voor livegang, zie punt 18)
 
 ---
 
@@ -57,6 +57,20 @@ De app is oorspronkelijk gemaakt met React en TypeScript en daarna samengeperst
 tot dat ene HTML-bestand. De database is Firebase (van Google), met Firestore voor
 de lijst en Storage voor de foto's. Firebase wordt vanaf internet ingeladen, dus
 de app heeft internet nodig om de actuele lijst te tonen.
+
+Foto's (van materiaal, bouwposten en profielen) worden verkleind en staan
+rechtstreeks in de database (Firestore), niet in Firebase Storage.
+
+De database heeft vier onderdelen:
+
+| Onderdeel  | Wat erin staat                                   |
+|------------|--------------------------------------------------|
+| items      | Het materiaal                                    |
+| meta       | Eén document "app" met de namenlijst en profielfoto's |
+| contacts   | De contactpersonen                               |
+| draaiboek  | De bouwposten                                    |
+
+Alle vier moeten in de Firestore Rules mogen lezen en schrijven.
 
 ---
 
@@ -143,9 +157,8 @@ verder een op zichzelf staand onderdeel en raakt de materiaallijst niet aan.
 
 BELANGRIJK, eenmalig in Firebase regelen: de databaseregels (Firestore Rules)
 moeten het onderdeel "contacts" toestaan om te lezen en te schrijven, net zoals
-"items". Staat dat niet aan, dan kunnen contactpersonen niet opgeslagen worden.
-Zolang de regels niet goed staan, werkt het scherm nog wel, maar bewaart het
-alleen op de telefoon zelf in plaats van gedeeld.
+"items". Staat dat niet aan, dan kunnen contactpersonen niet opgeslagen worden en toont
+het scherm een melding over de databaseregels.
 
 LEESBARE BRONCODE: van dit contactmenu is de leesbare broncode WEL bewaard, in
 het bestand contact-broncode.js. Dezelfde code zit ook onderin index.html. Wil je
@@ -192,8 +205,8 @@ niet aan.
 
 BELANGRIJK, eenmalig in Firebase regelen: de databaseregels (Firestore Rules)
 moeten het onderdeel "draaiboek" toestaan om te lezen en te schrijven, net zoals
-"items" en "contacts". Staat dat niet aan, dan worden bouwposten alleen op de
-telefoon zelf bewaard in plaats van gedeeld.
+"items" en "contacts". Staat dat niet aan, dan kunnen bouwposten niet
+opgeslagen worden en toont het scherm een melding over de databaseregels.
 
 LEESBARE BRONCODE: van dit draaiboekmenu is de leesbare broncode bewaard in het
 bestand draaiboek-broncode.js. Dezelfde code zit ook onderin index.html.
@@ -210,7 +223,7 @@ Let op: dit is een lichte drempel, geen echte beveiliging. De code staat in de
 app zelf, dus wie er technisch handig mee is zou hem kunnen omzeilen. Voor het
 voorkomen van per ongeluk of ongewenst verwijderen is het prima.
 
-De code instellen of wijzigen: bovenin index.html staat een blok met het kopje
+De code instellen of wijzigen: onderin index.html staat een blok met het kopje
 "Gedeelde verwijdercode". Daarin staat een regel `var CODE = "Bp2026";`.
 Verander het woord tussen de aanhalingstekens in je eigen code. Dat is de enige
 plek die je hoeft aan te passen; hij geldt meteen voor materiaal, contacten en
@@ -392,3 +405,66 @@ opgeslagen. Bouwposten van voor de technieken hebben gewoon geen techniek.
 Alles, Ingecheckt en Uitgecheckt zijn daarom iets smaller gemaakt en staan iets
 dichter op elkaar, en het vakje zelf is compacter. Het past nu op schermen van 375
 breed en breder, ook bij getallen als 45/310.
+
+---
+
+## 18. Controle en reparaties voor de livegang (30 september 2026)
+
+De hele app is doorgelopen in een testbrowser op telefoonformaat, met en zonder
+internet. Dit is er veranderd:
+
+**Zonder bereik.** Opende je de app zonder internet, dan verschenen er zes
+nepvoorbeelden (zoals "Rood statisch touw 40m"), en wat je dan invoerde bleef
+stilletjes alleen op die ene telefoon staan. Nu:
+
+- Geen nepvoorbeelden meer. Je ziet de laatst bekende lijst, die de telefoon bij
+  elke verbinding onthoudt. Dat geldt voor materiaal, namen, draaiboek en contacten.
+  Foto's van bouwposten worden alleen onthouden als ze in het telefoongeheugen passen.
+- Bovenin staat een gele melding dat er geen verbinding is.
+- Opslaan, afvinken, uitchecken en verwijderen kan dan niet. Je krijgt een melding
+  en wat je in een invulscherm had getypt blijft staan.
+- Komt het bereik terug, dan verbindt de app vanzelf opnieuw (bij het terugkomen
+  van bereik, en verder elke 30 seconden). Lukt dat niet, dan helpt de app sluiten
+  en opnieuw openen.
+
+**Coördinaten met komma's.** "52,1234 5,6789" wordt nu goed gelezen. Voorheen
+opende de kaart dan op een verkeerde plek. Een coördinaat die niet te herkennen
+is (of buiten de aarde valt), geeft bij opslaan eerst een vraag.
+
+**Belknop.** Een contactpersoon zonder telefoonnummer krijgt geen belknop meer.
+
+**Filters in het draaiboek** heten nu kort Dag, Status en Hike, zodat ze op een
+telefoon volledig leesbaar zijn.
+
+**Namen verwijderen.** Het kruisje bij een naam in "Wie ben jij?" vraagt nu eerst
+of je het zeker weet en daarna de verwijdercode. Materiaal dat die persoon al had
+ingevoerd houdt gewoon zijn naam.
+
+**Plusknop.** De ronde plusknop van Contact en Draaiboek viel over de knop
+Toevoegen in "Wie ben jij?". Hij ligt nu onder dat scherm.
+
+**Service worker (sw.js).** Het versienummer is nu bouwploeg-v2, en elke gelukte
+keer openen onthoudt de nieuwste versie van de app. Zo opent een telefoon zonder
+bereik niet meer een oude versie. Verhoog het nummer (v3, v4) bij elke volgende
+nieuwe versie.
+
+Technisch, voor later (de hoofdapp heeft geen leesbare broncode, dus dit staat
+hier):
+
+- In de verbindingscode van de hoofdapp (zoek op `bpm.laatst.items`) is een
+  nieuwe stand "offline" bijgekomen naast "cloud" en "local". De laatst bekende
+  gegevens staan in de telefoon onder `bpm.laatst.items` en `bpm.laatst.meta`.
+- `window.__bpOffline` is true zolang er geen verbinding is. De hoofdapp stuurt
+  dan het signaal `bp-verbinding`, waarop Contact en Draaiboek hun scherm
+  bijwerken (zodat er geen dubbele melding staat).
+- Voor het laden van Firebase wordt eerst gecontroleerd of het bereikbaar is.
+  Een mislukte laadpoging onthoudt de browser namelijk, en dan zou opnieuw
+  verbinden pas na herstarten lukken.
+- De functies voor opslaan, verwijderen en status wijzigen weigeren in de stand
+  "offline". Het invulscherm voor materiaal controleert dat ook zelf, zodat de
+  invoer blijft staan.
+- Contact en Draaiboek bewaren hun laatst bekende lijst onder
+  `bouwploeg-contacten-laatst` en `bouwploeg-draaiboek-laatst`.
+
+Nog steeds zelf te controleren in Firebase: de Firestore Rules voor items, meta,
+contacts en draaiboek, en of daar geen einddatum in staat (testmodus).

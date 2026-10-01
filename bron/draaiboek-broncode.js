@@ -27,8 +27,11 @@
 
    Belangrijk: in Firebase moeten de regels het onderdeel "draaiboek"
    toestaan om te lezen en schrijven, net zoals bij "items" en "contacts".
-   Staat dat niet aan, dan worden bouwposten alleen op de eigen telefoon
-   bewaard.
+
+   Zonder verbinding (sinds 30 september 2026): de module toont dan de
+   laatst bekende lijst. Opslaan en verwijderen kan dan niet; er wordt
+   niets meer stilletjes alleen op de telefoon bewaard. Zodra er weer
+   bereik is, probeert de module vanzelf opnieuw te verbinden.
    ===================================================================== */
 
 (function () {
@@ -113,16 +116,20 @@
   };
 
   // ---------------------------------------------------------------------
-  // Opslag: eerst de gedeelde database (Firebase), anders lokaal op de
-  // telefoon zelf zodat de module altijd blijft werken.
+  // Opslag: altijd de gedeelde database (Firebase). Lukt verbinden niet,
+  // dan tonen we de laatst bekende lijst en kan er niets gewijzigd worden,
+  // zodat er nooit iets alleen op deze telefoon terechtkomt.
   // ---------------------------------------------------------------------
   var SDK_BASIS = "https://www.gstatic.com/firebasejs/10.14.1/";
-  var LOKALE_SLEUTEL = "bouwploeg-draaiboek";
+  var CACHE_SLEUTEL = "bouwploeg-draaiboek-laatst";
 
   var db = null;
   var fs = null;
-  var modus = "lokaal";
+  var modus = "bezig";        // "bezig", "cloud" of "offline"
+  var foutmelding = "";
   var posten = [];
+  var OFFLINE_TEKST = "Geen verbinding. Er is niets opgeslagen en je invoer blijft staan. "
+    + "Probeer het opnieuw zodra je bereik hebt.";
 
   // Filters (leeg = alles tonen).
   var filterDag = "";
@@ -140,71 +147,95 @@
     return confirm("Verwijderen?");
   }
 
-  function lokaalLezen() {
-    try { return JSON.parse(localStorage.getItem(LOKALE_SLEUTEL) || "[]"); }
-    catch (e) { return []; }
+  // De laatst bekende lijst onthouden en teruglezen (voor als er geen
+  // verbinding is). Alleen om te bekijken, nooit om in te bewaren. Passen
+  // de foto's niet in het telefoongeheugen, dan onthouden we de lijst
+  // zonder foto's.
+  function cacheLezen() {
+    try {
+      var l = JSON.parse(localStorage.getItem(CACHE_SLEUTEL) || "[]");
+      return Array.isArray(l) ? l : [];
+    } catch (e) { return []; }
   }
-  function lokaalSchrijven(lijst) {
-    try { localStorage.setItem(LOKALE_SLEUTEL, JSON.stringify(lijst)); }
+  function cacheSchrijven(lijst) {
+    try { localStorage.setItem(CACHE_SLEUTEL, JSON.stringify(lijst)); return; }
     catch (e) {}
+    try {
+      localStorage.setItem(CACHE_SLEUTEL, JSON.stringify(lijst.map(function (p) {
+        var k = {}; for (var x in p) { if (x !== "foto") k[x] = p[x]; } return k;
+      })));
+    } catch (e2) {}
   }
 
+  function gaOffline(melding) {
+    modus = "offline";
+    foutmelding = melding || "";
+    posten = cacheLezen();
+    tekenLijst();
+  }
+
+  var bezigMetVerbinden = false;
+  async function sdkBereikbaar() {
+    var bestanden = ["firebase-app.js", "firebase-firestore.js"];
+    for (var i = 0; i < bestanden.length; i++) {
+      var r = await fetch(SDK_BASIS + bestanden[i], { mode: "cors" });
+      if (!r.ok) throw new Error("Firebase niet bereikbaar");
+    }
+  }
   async function verbind() {
+    if (modus === "cloud" || bezigMetVerbinden) return;
     var config = window.__BOUWPLOEG_FIREBASE__;
-    if (!config) { modus = "lokaal"; posten = lokaalLezen(); tekenLijst(); return; }
+    if (!config) { gaOffline("De database-instellingen ontbreken."); return; }
+    bezigMetVerbinden = true;
     try {
+      // Eerst kijken of Firebase bereikbaar is. Mislukt het laden zelf, dan
+      // onthoudt de browser dat en lukt opnieuw proberen pas na herstarten.
+      await sdkBereikbaar();
       var appMod = await import(SDK_BASIS + "firebase-app.js");
       fs = await import(SDK_BASIS + "firebase-firestore.js");
       // Eigen verbindingsnaam zodat we de app en het contactmenu niet storen.
       var app = appMod.initializeApp(config, "bpDraaiboek");
       db = fs.getFirestore(app);
       modus = "cloud";
+      foutmelding = "";
+      tekenLijst();
       fs.onSnapshot(
         fs.collection(db, "draaiboek"),
         function (snap) {
           var lijst = [];
           snap.forEach(function (d) { lijst.push(d.data()); });
           posten = lijst;
+          cacheSchrijven(lijst);
           tekenLijst();
         },
-        function () {
-          modus = "lokaal";
-          posten = lokaalLezen();
-          tekenLijst();
+        function (fout) {
+          gaOffline("Het gedeelde draaiboek kan niet gelezen worden ("
+            + ((fout && fout.code) || "fout") + "). Controleer de databaseregels voor draaiboek.");
         }
       );
     } catch (e) {
-      modus = "lokaal";
-      posten = lokaalLezen();
-      tekenLijst();
+      gaOffline("");
     }
+    bezigMetVerbinden = false;
   }
+  window.addEventListener("online", verbind);
+  setInterval(function () { if (modus === "offline" && !foutmelding) verbind(); }, 30000);
 
+  // Geeft false terug als opslaan niet kan, zodat het invulscherm open blijft.
   function bewaarPost(post) {
-    if (modus === "cloud" && db && fs) {
-      fs.setDoc(fs.doc(db, "draaiboek", post.id), post).catch(function () {
-        alert("Opslaan mislukt. Controleer je internetverbinding.");
-      });
-    } else {
-      var bestaat = posten.some(function (p) { return p.id === post.id; });
-      posten = bestaat
-        ? posten.map(function (p) { return p.id === post.id ? post : p; })
-        : [post].concat(posten);
-      lokaalSchrijven(posten);
-      tekenLijst();
-    }
+    if (modus !== "cloud" || !db || !fs) { alert(OFFLINE_TEKST); return false; }
+    fs.setDoc(fs.doc(db, "draaiboek", post.id), post).catch(function () {
+      alert("Opslaan mislukt. Controleer je internetverbinding.");
+    });
+    return true;
   }
 
   function verwijderPost(id) {
-    if (modus === "cloud" && db && fs) {
-      fs.deleteDoc(fs.doc(db, "draaiboek", id)).catch(function () {
-        alert("Verwijderen mislukt.");
-      });
-    } else {
-      posten = posten.filter(function (p) { return p.id !== id; });
-      lokaalSchrijven(posten);
-      tekenLijst();
-    }
+    if (modus !== "cloud" || !db || !fs) { alert(OFFLINE_TEKST); return false; }
+    fs.deleteDoc(fs.doc(db, "draaiboek", id)).catch(function () {
+      alert("Verwijderen mislukt.");
+    });
+    return true;
   }
 
   // ---------------------------------------------------------------------
@@ -213,22 +244,37 @@
   // pakt simpelweg de eerste twee getallen.
   // ---------------------------------------------------------------------
   // Uit het ingevoerde veld een coördinaat halen. Dit kan een losse
-  // coördinaat zijn ("52.1234, 5.6789") of een kaart-link waarin de
-  // coördinaat staat (bijv. ...@52.1234,5.6789... of ...?q=52.1234,5.6789...).
+  // coördinaat zijn ("52.1234, 5.6789", of met komma's zoals in het
+  // Nederlands: "52,1234 5,6789") of een kaart-link waarin de coördinaat
+  // staat (bijv. ...@52.1234,5.6789... of ...?q=52.1234,5.6789...).
+  // Geeft null terug als het geen geldige plek op aarde is.
+  function geldig(lat, lng) {
+    if (isNaN(lat) || isNaN(lng)) return null;
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+    return { lat: lat, lng: lng };
+  }
   function leesCoord(tekst) {
     if (!tekst) return null;
     var s = String(tekst).trim();
     // Coördinaat uit een kaart-URL (na @ of na q=/query=/ll=/destination=/center=).
-    var m = s.match(/(?:@|[?&](?:q|query|ll|destination|center|daddr)=)\s*(-?\d+\.\d+)[,\s]+(-?\d+\.\d+)/i);
-    if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
-    // Anders alleen bij een losse invoer (geen webadres): eerste twee getallen.
-    if (!/^https?:\/\//i.test(s)) {
+    var m = s.match(/(?:@|[?&](?:q|query|ll|destination|center|daddr)=)\s*(-?\d+\.\d+)(?:,|%2C|\s)+(-?\d+\.\d+)/i);
+    if (m) return geldig(parseFloat(m[1]), parseFloat(m[2]));
+    if (/^https?:\/\//i.test(s)) return null;
+
+    // Losse invoer met punten als decimaalteken: "52.1234, 5.6789".
+    if (s.indexOf(".") !== -1) {
       var n = s.match(/-?\d+(?:\.\d+)?/g);
-      if (n && n.length >= 2) {
-        var lat = parseFloat(n[0]), lng = parseFloat(n[1]);
-        if (!isNaN(lat) && !isNaN(lng)) return { lat: lat, lng: lng };
-      }
+      if (n && n.length >= 2) return geldig(parseFloat(n[0]), parseFloat(n[1]));
+      return null;
     }
+    // Losse invoer met komma's als decimaalteken: "52,1234 5,6789",
+    // "52,1234; 5,6789" of zelfs "52,1234, 5,6789".
+    var k = s.match(/-?\d+/g);
+    if (k && k.length === 4) {
+      return geldig(parseFloat(k[0] + "." + k[1]), parseFloat(k[2] + "." + k[3]));
+    }
+    // Twee hele getallen, bijvoorbeeld "52 5".
+    if (k && k.length === 2) return geldig(parseFloat(k[0]), parseFloat(k[1]));
     return null;
   }
 
@@ -288,8 +334,8 @@
   var css = ""
     + "#dbk-list{padding-bottom:104px}"
     + ".dbk-filters{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 12px}"
-    + ".dbk-filters select{flex:1 1 30%;min-width:104px;border-radius:999px;border:2px solid hsl(var(--border));"
-    + "background:hsl(var(--card));color:hsl(var(--foreground));padding:8px 14px;font-size:14px;font-weight:600;"
+    + ".dbk-filters select{flex:1 1 0;min-width:0;border-radius:999px;border:2px solid hsl(var(--border));"
+    + "background:hsl(var(--card));color:hsl(var(--foreground));padding:8px 8px 8px 12px;font-size:14px;font-weight:600;"
     + "outline:none;font-family:inherit;cursor:pointer}"
     + ".dbk-filters select:focus{border-color:hsl(var(--accent))}"
     + ".dbk-dag{margin:20px 2px 10px;padding-bottom:6px;border-bottom:2px solid hsl(var(--border));"
@@ -343,6 +389,8 @@
     + ".dbk-zoom img{display:block;width:100%;height:auto;cursor:zoom-in}"
     + ".dbk-zoom.groot img{width:200%;max-width:none;cursor:zoom-out}"
     + ".dbk-zoom .kop .hint{font-size:12px;color:hsl(var(--muted-foreground));font-weight:600}"
+    + ".dbk-offline{border:1px solid #E9C13F;background:#FDF6DC;color:#7A4B0C;border-radius:12px;"
+    + "padding:10px 12px;font-size:14px;line-height:1.4;margin:0 0 12px}"
     + ".dbk-leeg{text-align:center;color:hsl(var(--muted-foreground));margin-top:50px;font-size:15px}"
     + ".dbk-thumb{width:64px;height:64px;object-fit:cover;flex:none;align-self:center;border-radius:10px;margin:8px 10px 8px 4px}"
     + ".dbk-detailfoto{width:100%;border-radius:12px;margin-bottom:16px;display:block}"
@@ -353,7 +401,9 @@
     + "#dbk-plus{position:fixed;right:20px;bottom:calc(env(safe-area-inset-bottom) + 80px);"
     + "width:56px;height:56px;border-radius:50%;border:0;background:hsl(var(--accent));color:#3a2c07;"
     + "font-size:32px;line-height:1;display:none;align-items:center;justify-content:center;cursor:pointer;"
-    + "box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:40}"
+    // z-index 30: boven het menu onderin (20), onder de schermen die over
+    // de app heen schuiven, zoals "Wie ben jij?" (40).
+    + "box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:30}"
     + "#dbk-plus.zichtbaar{display:flex}"
     // Detail- en invulscherm delen dezelfde vol-scherm-stijl.
     + ".dbk-scherm{position:fixed;inset:0;z-index:60;display:none;flex-direction:column;"
@@ -502,9 +552,10 @@
 
     var filterbalk = document.createElement("div");
     filterbalk.className = "dbk-filters";
-    var fDag = maakSelect(DAGEN, true, "Alle dagen");
-    var fStatus = maakSelect(STATUSSEN, true, "Alle statussen");
-    var fHike = maakSelect(HIKES, true, "Alle hikes");
+    // Korte namen, zodat ze op een telefoonscherm volledig passen.
+    var fDag = maakSelect(DAGEN, true, "Dag");
+    var fStatus = maakSelect(STATUSSEN, true, "Status");
+    var fHike = maakSelect(HIKES, true, "Hike");
     fDag.addEventListener("change", function () { filterDag = fDag.value; tekenLijst(); });
     fStatus.addEventListener("change", function () { filterStatus = fStatus.value; tekenLijst(); });
     fHike.addEventListener("change", function () { filterHike = fHike.value; tekenLijst(); });
@@ -646,8 +697,8 @@
     });
     formScherm.querySelector("[data-bewaar]").addEventListener("click", bewaarVanuitForm);
     vVerwijder.addEventListener("click", function () {
-      if (bewerktId && magVerwijderen()) {
-        verwijderPost(bewerktId);
+      if (modus !== "cloud") { alert(OFFLINE_TEKST); return; }
+      if (bewerktId && magVerwijderen() && verwijderPost(bewerktId)) {
         formScherm.classList.remove("open");
         detail.classList.remove("open");
       }
@@ -677,6 +728,15 @@
     if (!body) return;
     body.innerHTML = "";
 
+    // Geen verbinding: uitleg bovenaan (tenzij de hoofdapp dat al meldt).
+    if (modus === "offline" && (foutmelding || !window.__bpOffline)) {
+      var melding = document.createElement("p");
+      melding.className = "dbk-offline";
+      melding.textContent = foutmelding
+        || "Geen verbinding. Je ziet de laatst bekende lijst; toevoegen en wijzigen kan weer zodra je bereik hebt.";
+      body.appendChild(melding);
+    }
+
     var zichtbaar = posten.filter(function (p) {
       if (filterDag && p.dag !== filterDag) return false;
       if (filterStatus && p.status !== filterStatus) return false;
@@ -689,6 +749,8 @@
       leeg.className = "dbk-leeg";
       leeg.textContent = posten.length
         ? "Geen bouwposten die aan de filters voldoen."
+        : modus === "bezig" ? "Draaiboek laden..."
+        : modus === "offline" ? "Nog geen bouwposten bekend op deze telefoon."
         : "Nog geen bouwposten. Tik op + om er een toe te voegen.";
       body.appendChild(leeg);
       return;
@@ -983,6 +1045,13 @@
       alert("Vul minstens een activiteit of een locatie in.");
       return;
     }
+    // Een coördinaat die niet te herkennen is, geeft later een verkeerde of
+    // geen kaart. Dan eerst even vragen.
+    var coordTekst = vCoord.value.trim();
+    if (coordTekst && !isLink(coordTekst) && !leesCoord(coordTekst)) {
+      if (!confirm("De coördinaat wordt niet herkend. Gebruik bijvoorbeeld 52.1234, 5.6789 "
+        + "of 52,1234 5,6789, of plak een Google Maps-link.\n\nToch zo opslaan?")) return;
+    }
     var post = {
       id: bewerktId || nieuwId(),
       dag: vDag.value || DAGEN[0],
@@ -991,16 +1060,16 @@
       post: vPost.value.trim(),
       locatie: locatie,
       activiteit: activiteit,
-      coord: vCoord.value.trim(),
+      coord: coordTekst,
       status: vStatus.value || "",
       technieken: gekozenTech.slice(),
       bijzonderheden: vBijz.value.trim(),
       foto: huidigeFoto || "",
       updatedAt: Date.now()
     };
-    if (!bewerktId) post.createdAt = Date.now();
-    bewaarPost(post);
-    formScherm.classList.remove("open");
+    var bestaand = bewerktId && posten.filter(function (p) { return p.id === bewerktId; })[0];
+    post.createdAt = (bestaand && bestaand.createdAt) || Date.now();
+    if (bewaarPost(post)) formScherm.classList.remove("open");
   }
 
   // ---------------------------------------------------------------------
@@ -1008,6 +1077,8 @@
   // ---------------------------------------------------------------------
   function start() {
     bouwSchermen();
+    // De hoofdapp meldt het als de verbinding wegvalt of terugkomt.
+    window.addEventListener("bp-verbinding", tekenLijst);
     verbind();
   }
 

@@ -1,1 +1,9 @@
-Enter file contents here
+Map "bron": leesbare broncode van Bouwploeg materiaal.
+
+contact-broncode.js     Het menu Contact
+draaiboek-broncode.js   Het menu Draaiboek
+PROJECTLOGBOEK.md       Wat de app is, hoe hij in elkaar zit en alle wijzigingen
+
+Dezelfde code van Contact en Draaiboek zit ook onderin index.html.
+De hoofdapp (Toevoegen, Overzicht, Inleveren) heeft geen losse leesbare
+broncode meer; zijn wijzigingen staan beschreven in het logboek.
