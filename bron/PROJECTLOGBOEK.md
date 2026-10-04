@@ -5,7 +5,7 @@ elkaar zit en welke keuzes er gemaakt zijn. Bewaar dit samen met de app.
 Als je later iets wilt aanpassen, geef dit bestand er dan bij, dan is meteen
 duidelijk hoe alles bedoeld is.
 
-Laatst bijgewerkt: 30 september 2026 (controle voor livegang, zie punt 18)
+Laatst bijgewerkt: 4 oktober 2026 (4 foto's per bouwpost, zie punt 19)
 
 ---
 
@@ -179,12 +179,13 @@ niet aan.
   De lijst wordt per dag gegroepeerd, met een duidelijke scheiding, en binnen een
   dag gesorteerd op tijdstip.
 - Per bouwpost kun je invoeren: dag, tijdstip, hike (A t/m F of Bouwploeg), bouwpost
-  nummer, locatie, activiteit, techniek, foto, coördinaat, status en afspraken en
-  bijzonderheden. (Techniek is toegevoegd op 22 september 2026, zie punt 17.)
+  nummer, locatie, activiteit, techniek, foto's (maximaal 4), coördinaat, status en
+  afspraken en bijzonderheden. (Techniek is toegevoegd op 22 september 2026, zie punt 17.)
 - Het bouwpost nummer wordt getoond als de hikeletter met een tweecijferig
   nummer, bijvoorbeeld "C03". Bij hike Bouwploeg is er geen letter (dan bijv. "01").
-- De foto wordt automatisch verkleind (net als bij het materiaal) en verschijnt
-  rechts in het overzicht bij de bouwpost, en groot in het detailscherm.
+- De foto's worden automatisch verkleind (net als bij het materiaal). De eerste
+  verschijnt rechts in het overzicht bij de bouwpost, alle foto's staan groot in
+  het detailscherm. Zie punt 19.
 - De hikes gebruiken dezelfde kleuren als bij Contact. Bouwploeg is grijs.
 - Statussen en kleur: nog niet gebouwd (oranje), gebouwd (groen), afgerond
   (blauw). Bij status afgerond staat er in het overzicht een streep door de naam
@@ -468,3 +469,58 @@ hier):
 
 Nog steeds zelf te controleren in Firebase: de Firestore Rules voor items, meta,
 contacts en draaiboek, en of daar geen einddatum in staat (testmodus).
+
+---
+
+## 19. Vier foto's per bouwpost (4 oktober 2026)
+
+Bij een bouwpost in het draaiboek kun je nu maximaal 4 foto's zetten in plaats
+van 1. Bij het materiaal blijft het 1 foto.
+
+- **Invulscherm.** Onder Foto's staan de gekozen foto's als vier vakjes naast
+  elkaar, elk met een kruisje om hem weg te halen. Ernaast staat bijvoorbeeld
+  "2 van 4". De knop heet Foto toevoegen, en daarna Nog een foto. Bij 4 foto's
+  verdwijnt de knop. Je kunt ook meerdere foto's tegelijk kiezen; boven de 4
+  krijg je een melding en vallen de rest af. De eerste foto heeft het labeltje
+  "In lijst", want die zie je in het overzicht. Wil je een andere foto voorop,
+  haal dan de foto's ervoor weg en voeg ze opnieuw toe.
+- **Lijst.** Rechts staat de eerste foto, met een telletje als er meer zijn,
+  bijvoorbeeld +2.
+- **Detailscherm.** De foto's staan bovenaan. Veeg opzij voor de volgende; de
+  stipjes eronder laten zien bij welke je bent. Tik op een foto om hem
+  schermvullend te zien, en daar nog eens om in te zoomen (net als bij de
+  technieken).
+
+**Ruimte in de database.** Een bouwpost mag in Firestore samen maximaal ongeveer
+1 MB zijn, en de foto's staan erin. Daarom wordt elke foto nu kleiner gemaakt dan
+voorheen: hooguit ongeveer 150 kB (eerst lagere kwaliteit, en als dat niet genoeg
+is ook kleinere afmetingen, vanaf 1000 pixels breed). Getest met vier zware foto's
+van een telefoon: samen ongeveer 0,75 MB. Is een bouwpost toch te groot, dan
+krijg je bij Opslaan een melding en blijft je invoer staan.
+
+**Bestaande bouwposten** houden hun ene foto. Oude foto's mochten groter zijn;
+die worden vanzelf kleiner gemaakt zodra je zo'n bouwpost opent in het
+invulscherm, zodat er 4 passen. Tijdens het verkleinen staat er
+"Bezig met verkleinen..." op de knop.
+
+**Service worker.** Het versienummer in sw.js is verhoogd naar bouwploeg-v3.
+
+Technisch, voor later:
+
+- Bij een bouwpost wordt nu het veld `fotos` bewaard, een lijstje met de
+  verkleinde foto's (leeg als er geen is). Het oude veld `foto` wordt nog
+  gelezen (functie `fotosVan`) en verdwijnt zodra de bouwpost opnieuw wordt
+  opgeslagen. Er zijn geen nieuwe Firebase-regels nodig.
+- In de broncode staan bovenaan bij FOTO'S de getallen `MAX_FOTOS` (4),
+  `FOTO_MAX_TEKENS` (grootte per foto) en `POST_MAX_TEKENS` (grens per bouwpost).
+  Wil je ooit meer foto's, verlaag dan ook `FOTO_MAX_TEKENS`, anders past het
+  niet in de database.
+- De laatst bekende lijst voor zonder bereik (`bouwploeg-draaiboek-laatst`)
+  bewaart eerst alles; past dat niet in het telefoongeheugen, dan alleen de
+  eerste foto per bouwpost, en anders geen foto's.
+- Let op: een telefoon die nog de oude versie van de app open heeft, kent
+  het veld `fotos` niet. Slaat iemand daarmee een bouwpost op, dan raakt die
+  post zijn foto's kwijt. De nieuwe versie wordt bij de volgende keer openen met
+  bereik vanzelf geladen; laat iedereen de app na het uploaden even helemaal
+  sluiten en opnieuw openen.
+
