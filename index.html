@@ -602,6 +602,8 @@ window.__BOUWPLOEG_FIREBASE__ = {
    - Per bouwpost kun je een of meer technieken kiezen (bijvoorbeeld
      knopen). De uitleg daarvan verschijnt als afbeelding in het
      detailscherm. De lijst met technieken staat hieronder bij TECHNIEKEN.
+   - Per bouwpost kun je maximaal 4 foto's toevoegen (sinds 4 oktober
+     2026, daarvoor 1). Zie FOTO'S hieronder.
 
    Hoe het aan de app vastzit:
    - In het menu onderin is een knop "Draaiboek" toegevoegd die naar het
@@ -741,14 +743,25 @@ window.__BOUWPLOEG_FIREBASE__ = {
       return Array.isArray(l) ? l : [];
     } catch (e) { return []; }
   }
+  // Eerst alles proberen, dan alleen de eerste foto per bouwpost, en als
+  // dat ook niet past de lijst zonder foto's.
+  function zonderFotos(p, houdEerste) {
+    var k = {};
+    for (var x in p) { if (x !== "foto" && x !== "fotos") k[x] = p[x]; }
+    var f = fotosVan(p);
+    if (houdEerste && f.length) k.fotos = [f[0]];
+    return k;
+  }
   function cacheSchrijven(lijst) {
     try { localStorage.setItem(CACHE_SLEUTEL, JSON.stringify(lijst)); return; }
     catch (e) {}
     try {
-      localStorage.setItem(CACHE_SLEUTEL, JSON.stringify(lijst.map(function (p) {
-        var k = {}; for (var x in p) { if (x !== "foto") k[x] = p[x]; } return k;
-      })));
+      localStorage.setItem(CACHE_SLEUTEL, JSON.stringify(lijst.map(function (p) { return zonderFotos(p, true); })));
+      return;
     } catch (e2) {}
+    try {
+      localStorage.setItem(CACHE_SLEUTEL, JSON.stringify(lijst.map(function (p) { return zonderFotos(p, false); })));
+    } catch (e3) {}
   }
 
   function gaOffline(melding) {
@@ -885,31 +898,66 @@ window.__BOUWPLOEG_FIREBASE__ = {
     return letter + nr;
   }
 
+  // ---------------------------------------------------------------------
+  // FOTO'S (sinds 4 oktober 2026 maximaal 4 per bouwpost)
+  //
+  // De foto's staan in de database in het veld "fotos" (een lijstje).
+  // Bouwposten van daarvoor hebben er een, in het oude veld "foto"; die
+  // wordt hier ook gelezen en omgezet zodra de post opnieuw wordt bewaard.
+  //
+  // Een bouwpost mag in de database samen maximaal ongeveer 1 MB zijn.
+  // Daarom wordt elke foto verkleind tot hooguit FOTO_MAX_TEKENS, zodat
+  // 4 foto's plus de rest ruim passen.
+  // ---------------------------------------------------------------------
+  var MAX_FOTOS = 4;
+  var FOTO_MAX_TEKENS = 200000;     // ongeveer 150 kB per foto
+  var POST_MAX_TEKENS = 1000000;    // veilige grens onder de 1 MB van de database
+
+  function fotosVan(p) {
+    if (!p) return [];
+    if (Array.isArray(p.fotos)) return p.fotos.filter(function (f) { return !!f; });
+    return p.foto ? [p.foto] : [];
+  }
+
   // Een gekozen foto verkleinen zodat hij niet te veel ruimte inneemt (net als
-  // bij het materiaal). Geeft een verkleinde data-URL terug via de callback.
+  // bij het materiaal). Geeft een verkleinde data-URL terug via de callback,
+  // of null als het bestand niet als foto te lezen is.
   function verkleinFoto(file, klaar) {
     var reader = new FileReader();
-    reader.onload = function () {
-      var img = new Image();
-      img.onload = function () {
-        var max = 1000, w = img.width, h = img.height;
-        if (w > h && w > max) { h = Math.round(h * max / w); w = max; }
-        else if (h >= w && h > max) { w = Math.round(w * max / h); h = max; }
-        try {
-          var canvas = document.createElement("canvas");
-          canvas.width = w; canvas.height = h;
-          canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-          var q = 0.72, url = canvas.toDataURL("image/jpeg", q);
-          // Nog verder verkleinen als hij toch nog te groot is.
-          while (url.length > 500000 && q > 0.4) { q -= 0.1; url = canvas.toDataURL("image/jpeg", q); }
-          klaar(url);
-        } catch (e) { klaar(reader.result); }
-      };
-      img.onerror = function () { klaar(reader.result); };
-      img.src = reader.result;
-    };
+    reader.onload = function () { verkleinAfbeelding(reader.result, klaar); };
     reader.onerror = function () { klaar(null); };
     reader.readAsDataURL(file);
+  }
+
+  // Hetzelfde voor een foto die al bewaard was. Oude foto's (van voor
+  // 4 oktober 2026) mochten groter zijn; die worden zo kleiner gemaakt
+  // zodra je de bouwpost aanpast, zodat er 4 passen.
+  function verkleinAfbeelding(bron, klaar) {
+    (function () {
+      var img = new Image();
+      img.onload = function () {
+        try {
+          var max = 1000, url = "";
+          // Eerst de kwaliteit omlaag, en als dat niet genoeg is ook de maat.
+          while (true) {
+            var w = img.width, h = img.height;
+            if (w > h && w > max) { h = Math.round(h * max / w); w = max; }
+            else if (h >= w && h > max) { w = Math.round(w * max / h); h = max; }
+            var canvas = document.createElement("canvas");
+            canvas.width = w; canvas.height = h;
+            canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+            var q = 0.72;
+            url = canvas.toDataURL("image/jpeg", q);
+            while (url.length > FOTO_MAX_TEKENS && q > 0.45) { q -= 0.09; url = canvas.toDataURL("image/jpeg", q); }
+            if (url.length <= FOTO_MAX_TEKENS || max <= 500) break;
+            max -= 150;
+          }
+          klaar(url.length <= FOTO_MAX_TEKENS ? url : null);
+        } catch (e) { klaar(null); }
+      };
+      img.onerror = function () { klaar(null); };
+      img.src = bron;
+    })();
   }
 
   // ---------------------------------------------------------------------
@@ -976,12 +1024,36 @@ window.__BOUWPLOEG_FIREBASE__ = {
     + ".dbk-offline{border:1px solid #E9C13F;background:#FDF6DC;color:#7A4B0C;border-radius:12px;"
     + "padding:10px 12px;font-size:14px;line-height:1.4;margin:0 0 12px}"
     + ".dbk-leeg{text-align:center;color:hsl(var(--muted-foreground));margin-top:50px;font-size:15px}"
-    + ".dbk-thumb{width:64px;height:64px;object-fit:cover;flex:none;align-self:center;border-radius:10px;margin:8px 10px 8px 4px}"
-    + ".dbk-detailfoto{width:100%;border-radius:12px;margin-bottom:16px;display:block}"
-    + ".dbk-foto-knoppen{display:flex;gap:8px;flex-wrap:wrap}"
+    // Lijst: de eerste foto, met een telletje als er meer zijn.
+    + ".dbk-thumbvak{position:relative;flex:none;align-self:center;margin:8px 10px 8px 4px}"
+    + ".dbk-thumb{width:64px;height:64px;object-fit:cover;display:block;border-radius:10px}"
+    + ".dbk-thumbaantal{position:absolute;right:3px;bottom:3px;background:rgba(0,0,0,.68);color:#fff;"
+    + "font-size:11px;font-weight:800;line-height:1;padding:3px 5px;border-radius:999px}"
+    // Detailscherm: foto's om door te vegen, tik om te vergroten.
+    + ".dbk-galerij{margin-bottom:16px}"
+    + ".dbk-galerijrij{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:8px;border-radius:12px;"
+    + "scrollbar-width:none;-webkit-overflow-scrolling:touch}"
+    + ".dbk-galerijrij::-webkit-scrollbar{display:none}"
+    + ".dbk-galerijrij button{flex:0 0 100%;scroll-snap-align:center;padding:0;border:0;background:hsl(var(--muted));"
+    + "border-radius:12px;overflow:hidden;cursor:zoom-in}"
+    + ".dbk-galerijrij img{display:block;width:100%;height:260px;object-fit:cover}"
+    + ".dbk-galerijrij.een img{height:auto;max-height:420px;object-fit:contain}"
+    + ".dbk-stippen{display:flex;justify-content:center;gap:6px;margin-top:8px}"
+    + ".dbk-stippen span{width:7px;height:7px;border-radius:50%;background:hsl(var(--border))}"
+    + ".dbk-stippen span.aan{background:hsl(var(--foreground))}"
+    // Invulscherm: vakjes met de gekozen foto's.
+    + ".dbk-fotoraster{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}"
+    + ".dbk-fotoraster:empty{display:none}"
+    + ".dbk-fotovak{position:relative;aspect-ratio:1/1;border-radius:10px;overflow:hidden;background:hsl(var(--muted))}"
+    + ".dbk-fotovak img{width:100%;height:100%;object-fit:cover;display:block}"
+    + ".dbk-fotovak .weg{position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:50%;border:0;"
+    + "background:rgba(0,0,0,.65);color:#fff;font-size:16px;line-height:26px;padding:0;cursor:pointer;font-family:inherit}"
+    + ".dbk-fotovak .eerste{position:absolute;left:4px;bottom:4px;background:rgba(0,0,0,.65);color:#fff;"
+    + "font-size:10px;font-weight:700;padding:2px 6px;border-radius:999px}"
+    + ".dbk-foto-knoppen{display:flex;gap:10px;flex-wrap:wrap;align-items:center}"
     + ".dbk-fotoknop{border:1px solid hsl(var(--input));border-radius:12px;background:hsl(var(--card));"
     + "color:hsl(var(--foreground));padding:12px 14px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit}"
-    + "[data-fotopreview]{width:100%;max-height:220px;object-fit:cover;border-radius:12px;margin-bottom:10px;display:block}"
+    + ".dbk-fototeller{font-size:13px;color:hsl(var(--muted-foreground));font-weight:600}"
     + "#dbk-plus{position:fixed;right:20px;bottom:calc(env(safe-area-inset-bottom) + 80px);"
     + "width:56px;height:56px;border-radius:50%;border:0;background:hsl(var(--accent));color:#3a2c07;"
     + "font-size:32px;line-height:1;display:none;align-items:center;justify-content:center;cursor:pointer;"
@@ -1034,20 +1106,40 @@ window.__BOUWPLOEG_FIREBASE__ = {
   var listRoot, body, plus, detail, formScherm;
   var vDag, vTijd, vHike, vPost, vLocatie, vActiviteit, vCoord, vStatus, vBijz, vVerwijder, formTitel, bewerktId;
   var techKeuze, techGekozen, zoomScherm, gekozenTech = [];
-  var huidigeFoto = "", fotoPreview, fotoInput, fotoWeg;
+  var huidigeFotos = [], fotoRaster, fotoInput, fotoKies, fotoTeller, fotosBezig = 0;
 
-  // De fotovoorbeeldweergave in het formulier bijwerken.
+  // De gekozen foto's in het formulier tonen, elk met een kruisje om hem
+  // weg te halen. De knop verdwijnt zodra er 4 zijn.
   function toonFotoPreview() {
-    if (!fotoPreview) return;
-    if (huidigeFoto) {
-      fotoPreview.src = huidigeFoto;
-      fotoPreview.style.display = "block";
-      fotoWeg.style.display = "block";
-    } else {
-      fotoPreview.removeAttribute("src");
-      fotoPreview.style.display = "none";
-      fotoWeg.style.display = "none";
-    }
+    if (!fotoRaster) return;
+    fotoRaster.innerHTML = "";
+    huidigeFotos.forEach(function (url, i) {
+      var vak = document.createElement("div");
+      vak.className = "dbk-fotovak";
+      var img = document.createElement("img");
+      img.src = url; img.alt = "Foto " + (i + 1);
+      vak.appendChild(img);
+      if (i === 0 && huidigeFotos.length > 1) {
+        var e = document.createElement("span");
+        e.className = "eerste"; e.textContent = "In lijst";
+        vak.appendChild(e);
+      }
+      var weg = document.createElement("button");
+      weg.type = "button"; weg.className = "weg";
+      weg.setAttribute("aria-label", "Foto " + (i + 1) + " verwijderen");
+      weg.textContent = "×";
+      weg.addEventListener("click", function () {
+        huidigeFotos.splice(i, 1);
+        toonFotoPreview();
+      });
+      vak.appendChild(weg);
+      fotoRaster.appendChild(vak);
+    });
+    var vol = huidigeFotos.length >= MAX_FOTOS;
+    fotoKies.style.display = vol ? "none" : "";
+    fotoKies.textContent = fotosBezig ? "Bezig met verkleinen..." : (huidigeFotos.length ? "Nog een foto" : "Foto toevoegen");
+    fotoKies.disabled = !!fotosBezig;
+    fotoTeller.textContent = huidigeFotos.length + " van " + MAX_FOTOS;
   }
 
   function maakSelect(opties, metLeeg, leegLabel) {
@@ -1113,12 +1205,13 @@ window.__BOUWPLOEG_FIREBASE__ = {
     + 'stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
     + '<path d="M12 12c-2-2.67-4-4-6-4a4 4 0 1 0 0 8c2 0 4-1.33 6-4Zm0 0c2 2.67 4 4 6 4a4 4 0 0 0 0-8c-2 0-4 1.33-6 4Z"/></svg>';
 
-  // De afbeelding groot tonen. Tik op de afbeelding om nog verder in te zoomen.
-  function openZoom(t) {
-    zoomScherm.querySelector("[data-zoomtitel]").textContent = t.naam;
+  // Een afbeelding (techniek of foto) groot tonen. Tik op de afbeelding om
+  // nog verder in te zoomen.
+  function openZoom(titel, src) {
+    zoomScherm.querySelector("[data-zoomtitel]").textContent = titel;
     var img = zoomScherm.querySelector("[data-zoombeeld]");
-    img.src = t.afbeelding;
-    img.alt = t.naam;
+    img.src = src;
+    img.alt = titel;
     zoomScherm.classList.remove("groot");
     zoomScherm.querySelector(".body").scrollTop = 0;
     zoomScherm.querySelector(".body").scrollLeft = 0;
@@ -1186,13 +1279,13 @@ window.__BOUWPLOEG_FIREBASE__ = {
       + '  <label class="dbk-veld"><span>Bouwpost nummer</span><input data-post type="text" inputmode="numeric" placeholder="Bijv. 3"></label>'
       + '  <label class="dbk-veld"><span>Locatie</span><input data-locatie type="text" placeholder="Naam of omschrijving van de locatie"></label>'
       + '  <label class="dbk-veld"><span>Activiteit</span><input data-activiteit type="text" placeholder="Wat gebeurt hier"></label>'
-      + '  <div class="dbk-veld"><span>Foto</span>'
-      + '    <img data-fotopreview alt="" style="display:none">'
+      + '  <div class="dbk-veld"><span>Foto\'s</span>'
+      + '    <div class="dbk-fotoraster" data-fotoraster></div>'
       + '    <div class="dbk-foto-knoppen">'
       + '      <button type="button" class="dbk-fotoknop" data-fotokies>Foto toevoegen</button>'
-      + '      <button type="button" class="dbk-fotoknop" data-fotoweg style="display:none">Verwijderen</button>'
+      + '      <span class="dbk-fototeller" data-fototeller></span>'
       + '    </div>'
-      + '    <input data-fotoinput type="file" accept="image/*" style="display:none">'
+      + '    <input data-fotoinput type="file" accept="image/*" multiple style="display:none">'
       + '  </div>'
       + '  <label class="dbk-veld"><span>Co\u00f6rdinaat of Google Maps-link</span><input data-coord type="text" placeholder="52.1234, 5.6789 of een kaart-link"></label>'
       + '  <label class="dbk-veld"><span>Status</span><span data-status></span></label>'
@@ -1260,21 +1353,46 @@ window.__BOUWPLOEG_FIREBASE__ = {
     formTitel = formScherm.querySelector("[data-titel]");
 
     // Fotoveld bedienen
-    fotoPreview = formScherm.querySelector("[data-fotopreview]");
+    // Je kunt meerdere foto's tegelijk kiezen; alles boven de 4 valt af.
+    fotoRaster = formScherm.querySelector("[data-fotoraster]");
     fotoInput = formScherm.querySelector("[data-fotoinput]");
-    fotoWeg = formScherm.querySelector("[data-fotoweg]");
-    formScherm.querySelector("[data-fotokies]").addEventListener("click", function () {
+    fotoKies = formScherm.querySelector("[data-fotokies]");
+    fotoTeller = formScherm.querySelector("[data-fototeller]");
+    fotoKies.addEventListener("click", function () {
+      if (fotosBezig || huidigeFotos.length >= MAX_FOTOS) return;
       fotoInput.click();
     });
     fotoInput.addEventListener("change", function () {
-      var f = fotoInput.files && fotoInput.files[0];
-      if (!f) return;
-      verkleinFoto(f, function (url) {
-        if (url) { huidigeFoto = url; toonFotoPreview(); }
-      });
+      var bestanden = Array.prototype.slice.call(fotoInput.files || []);
       fotoInput.value = "";
+      var ruimte = MAX_FOTOS - huidigeFotos.length;
+      if (!bestanden.length || ruimte <= 0) return;
+      if (bestanden.length > ruimte) {
+        alert("Er passen maximaal " + MAX_FOTOS + " foto's bij een bouwpost. Alleen de eerste "
+          + ruimte + " " + (ruimte === 1 ? "is" : "zijn") + " toegevoegd.");
+        bestanden = bestanden.slice(0, ruimte);
+      }
+      // Na elkaar verkleinen, zodat de volgorde gelijk blijft en een
+      // telefoon niet te veel tegelijk hoeft te doen.
+      var mislukt = 0;
+      fotosBezig = bestanden.length;
+      toonFotoPreview();
+      (function volgende(i) {
+        if (i >= bestanden.length) {
+          fotosBezig = 0;
+          toonFotoPreview();
+          if (mislukt) alert(mislukt === 1 ? "Een foto kon niet gelezen worden." : mislukt + " foto's konden niet gelezen worden.");
+          return;
+        }
+        verkleinFoto(bestanden[i], function (url) {
+          if (url && huidigeFotos.length < MAX_FOTOS) huidigeFotos.push(url);
+          else if (!url) mislukt++;
+          fotosBezig = bestanden.length - i - 1;
+          toonFotoPreview();
+          volgende(i + 1);
+        });
+      })(0);
     });
-    fotoWeg.addEventListener("click", function () { huidigeFoto = ""; toonFotoPreview(); });
 
     formScherm.querySelector("[data-terug]").addEventListener("click", function () {
       formScherm.classList.remove("open");
@@ -1429,12 +1547,22 @@ window.__BOUWPLOEG_FIREBASE__ = {
 
     kaart.appendChild(balk);
     kaart.appendChild(binnen);
-    if (p.foto) {
+    var fotos = fotosVan(p);
+    if (fotos.length) {
+      var vak = document.createElement("div");
+      vak.className = "dbk-thumbvak";
       var thumb = document.createElement("img");
       thumb.className = "dbk-thumb";
-      thumb.src = p.foto;
+      thumb.src = fotos[0];
       thumb.alt = "";
-      kaart.appendChild(thumb);
+      vak.appendChild(thumb);
+      if (fotos.length > 1) {
+        var aantal = document.createElement("span");
+        aantal.className = "dbk-thumbaantal";
+        aantal.textContent = "+" + (fotos.length - 1);
+        vak.appendChild(aantal);
+      }
+      kaart.appendChild(vak);
     }
     kaart.addEventListener("click", function () { openDetail(p); });
     return kaart;
@@ -1476,13 +1604,44 @@ window.__BOUWPLOEG_FIREBASE__ = {
     var b = detail.querySelector("[data-detailbody]");
     b.innerHTML = "";
 
-    // 1. Foto
-    if (p.foto) {
-      var f = document.createElement("img");
-      f.className = "dbk-detailfoto";
-      f.src = p.foto;
-      f.alt = "";
-      b.appendChild(f);
+    // 1. Foto's: veeg opzij voor de volgende, tik om te vergroten.
+    var fotos = fotosVan(p);
+    if (fotos.length) {
+      var titel = p.activiteit || p.locatie || "Foto";
+      var galerij = document.createElement("div");
+      galerij.className = "dbk-galerij";
+      var rij = document.createElement("div");
+      rij.className = "dbk-galerijrij" + (fotos.length === 1 ? " een" : "");
+      fotos.forEach(function (url, i) {
+        var knop = document.createElement("button");
+        knop.type = "button";
+        knop.setAttribute("aria-label", "Foto " + (i + 1) + " vergroten");
+        var img = document.createElement("img");
+        img.src = url; img.alt = "";
+        knop.appendChild(img);
+        knop.addEventListener("click", function () {
+          openZoom(fotos.length > 1 ? titel + " (" + (i + 1) + "/" + fotos.length + ")" : titel, url);
+        });
+        rij.appendChild(knop);
+      });
+      galerij.appendChild(rij);
+      if (fotos.length > 1) {
+        var stippen = document.createElement("div");
+        stippen.className = "dbk-stippen";
+        fotos.forEach(function (_, i) {
+          var s = document.createElement("span");
+          if (i === 0) s.className = "aan";
+          stippen.appendChild(s);
+        });
+        galerij.appendChild(stippen);
+        rij.addEventListener("scroll", function () {
+          var nu = Math.round(rij.scrollLeft / Math.max(1, rij.clientWidth + 8));
+          Array.prototype.forEach.call(stippen.children, function (s, i) {
+            s.className = i === nu ? "aan" : "";
+          });
+        }, { passive: true });
+      }
+      b.appendChild(galerij);
     }
 
     // 2. Activiteit en bouwpost nummer naast elkaar
@@ -1574,7 +1733,7 @@ window.__BOUWPLOEG_FIREBASE__ = {
         imgT.alt = techD.naam;
         imgT.loading = "lazy";
         knopT.appendChild(imgT);
-        knopT.addEventListener("click", function () { openZoom(techD); });
+        knopT.addEventListener("click", function () { openZoom(techD.naam, techD.afbeelding); });
         blok.appendChild(knopT);
         rijT.appendChild(blok);
       });
@@ -1617,12 +1776,26 @@ window.__BOUWPLOEG_FIREBASE__ = {
     tekenTechKeuze();
     vBijz.value = post ? (post.bijzonderheden || "") : "";
     vVerwijder.style.display = post ? "block" : "none";
-    huidigeFoto = post ? (post.foto || "") : "";
+    huidigeFotos = fotosVan(post).slice(0, MAX_FOTOS);
+    fotosBezig = 0;
+    // Oude, grotere foto's alvast kleiner maken (zie verkleinAfbeelding).
+    huidigeFotos.forEach(function (url, i) {
+      if (url.length <= FOTO_MAX_TEKENS) return;
+      fotosBezig++;
+      var lijst = huidigeFotos;
+      verkleinAfbeelding(url, function (klein) {
+        // Alleen vervangen als dit invulscherm nog over dezelfde foto's gaat.
+        var plek = lijst === huidigeFotos ? huidigeFotos.indexOf(url) : -1;
+        if (klein && plek !== -1) huidigeFotos[plek] = klein;
+        if (lijst === huidigeFotos) { fotosBezig = Math.max(0, fotosBezig - 1); toonFotoPreview(); }
+      });
+    });
     toonFotoPreview();
     formScherm.classList.add("open");
   }
 
   function bewaarVanuitForm() {
+    if (fotosBezig) { alert("Even wachten, de foto's worden nog verkleind."); return; }
     var activiteit = vActiviteit.value.trim();
     var locatie = vLocatie.value.trim();
     if (!activiteit && !locatie) {
@@ -1648,11 +1821,18 @@ window.__BOUWPLOEG_FIREBASE__ = {
       status: vStatus.value || "",
       technieken: gekozenTech.slice(),
       bijzonderheden: vBijz.value.trim(),
-      foto: huidigeFoto || "",
+      // Alleen nog het nieuwe veld "fotos"; het oude veld "foto" verdwijnt
+      // vanzelf, omdat de hele bouwpost opnieuw wordt weggeschreven.
+      fotos: huidigeFotos.slice(0, MAX_FOTOS),
       updatedAt: Date.now()
     };
     var bestaand = bewerktId && posten.filter(function (p) { return p.id === bewerktId; })[0];
     post.createdAt = (bestaand && bestaand.createdAt) || Date.now();
+    // De database weigert een bouwpost boven ongeveer 1 MB.
+    if (JSON.stringify(post).length > POST_MAX_TEKENS) {
+      alert("Deze bouwpost is te groot om op te slaan. Haal een foto weg of maak de tekst korter.");
+      return;
+    }
     if (bewaarPost(post)) formScherm.classList.remove("open");
   }
 

@@ -5,7 +5,7 @@
 
 // Verhoog dit nummer bij elke nieuwe versie van de app, zodat telefoons
 // zonder bereik ook de nieuwe versie uit het geheugen tonen.
-const CACHE = 'bouwploeg-v2';
+const CACHE = 'bouwploeg-v3';
 const SCHIL = [
   '/bouwploeg-materiaal/',
   '/bouwploeg-materiaal/index.html',
